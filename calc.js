@@ -377,8 +377,12 @@
     const i = lst.indexOf(R.Actividad); R.Krick_FA = pc && i >= 0 ? pc.krick_fa[i] : "";
   }
 
+  // PLANILLA = true reproduce las reglas originales de la planilla (solo para las pruebas de validación).
+  // Decisiones docentes del 07-11-2026 que cambian con PLANILLA = false: PA del adulto (pre-HTA desde 130/85) y energía NNA (± 15 % desde 5 años; PAL en adolescentes).
+  let PLANILLA = false;
   function calcular(D, opts) {
     opts = opts || {};
+    PLANILLA = !!opts.planilla;
     const R = {};
     const fnac = parseFecha(D.fnac), feval = parseFecha(D.feval);
     R.errorFechas = fnac && feval && feval.t < fnac.t ? "La fecha de evaluación es anterior a la de nacimiento." : "";
@@ -603,7 +607,7 @@
     // en vez de la tabla PAL OMS 2004 por edad y sexo de la planilla. El método rápido ≥ 6 años mantiene su ajuste de −15 % / +15 %.
     R.PAL_OMS = !nna || LT(edad, 1) || !isNum(edad) || !t3 ? "—" : (t3.pal[Math.min(edad, 17)] || [])[ci - 1 + (sx === "F" ? 1 : 0)] ?? "—";
     R.PAL_NNA = !nna || LT(edad, 1) || !isNum(edad) ? "—" : R.Factor_AF;
-    R.Ajuste_Rapido = nna && GE(edad, 6) && isNum(edad) ? (Act === "Intensa" ? 1.15 : Act === "Moderada" ? 1 : 0.85) : 1;
+    R.Ajuste_Rapido = nna && GE(edad, PLANILLA ? 6 : 5) && isNum(edad) ? (Act === "Intensa" ? 1.15 : Act === "Moderada" ? 1 : 0.85) : 1;
     R.Costo_Crec = (() => {
       if (!nna) return 0; if (!t3) return 0;
       let k; if (LT(aprox, 12)) k = "M" + (aprox < 3 ? 0 : aprox < 6 ? 3 : aprox < 9 ? 6 : 9);
@@ -673,7 +677,9 @@
     E.formulas = F;
     const fx = (n) => F.find((f) => f.nombre === n);
     // --- requerimiento seleccionado ---
-    E.Sugerida = nna ? (LT(aprox, 12) ? F[0].nombre : pc ? (F[7].aplica === "Sí" ? F[7].nombre : F[3].nombre) : F[3].nombre) : C === "" ? "" : F[11].nombre;
+    // Decisión docente (07-11-2026): de 5 a 9 años, método rápido kcal/kg ± 15 % según actividad; adolescentes (≥ 10 años), GEB OMS × PAL
+    const rapido59 = !PLANILLA && !pc && GE(edad, 5) && LT(edad, 10) && isNum(edad) && F[4].aplica === "Sí";
+    E.Sugerida = nna ? (LT(aprox, 12) ? F[0].nombre : pc ? (F[7].aplica === "Sí" ? F[7].nombre : F[3].nombre) : rapido59 ? F[4].nombre : F[3].nombre) : C === "" ? "" : F[11].nombre;
     const fin = S(D.req_formula);
     R.Formula_Usada = fin !== "" && fx(fin) && fx(fin).aplica === "Sí" ? fin : E.Sugerida;
     R.GET_Calc = fx(R.Formula_Usada) ? fx(R.Formula_Usada).get : "—";
@@ -1081,7 +1087,8 @@
     R.PA_MetaS = GE(ea, 80) ? 150 : riesgo ? 130 : 140; R.PA_MetaD = GE(ea, 80) ? 90 : riesgo ? 80 : 90;
     R.PA_Clasificacion = PAS === "" || PAD === "" ? "Sin dato" : C === "NNA" ? (LT(ea, 1) ? "No aplica (< 1 año)" : nivel === "" ? "Sin dato" : ["Normal", "Presión arterial elevada", "HTA etapa 1", "HTA etapa 2"][nivel])
       : S(D.ant_hta) === "Sí" ? (PAS < R.PA_MetaS && PAD < R.PA_MetaD ? "HTA compensada (en meta)" : "HTA no compensada (fuera de meta)")
-      : (PAS >= 180 || PAD >= 110) ? "HTA (PA ≥ 180/110)" : (PAS >= 140 || PAD >= 90) ? "PA elevada ≥ 140/90: sospecha de HTA (realizar perfil)" : (PAS >= 120 || PAD >= 80) ? "Pre-hipertensión (120-139/80-89)" : "Normal";
+      : (PAS >= 180 || PAD >= 110) ? "HTA (PA ≥ 180/110)" : (PAS >= 140 || PAD >= 90) ? "PA elevada ≥ 140/90: sospecha de HTA (realizar perfil)" : PLANILLA ? ((PAS >= 120 || PAD >= 80) ? "Pre-hipertensión (120-139/80-89)" : "Normal")
+      : (PAS >= 130 || PAD >= 85) ? "Pre-hipertensión (130-139/85-89)" : "Normal"; // decisión docente 07-11-2026: pre-HTA desde 130/85
     const pc = R.PA_Clasificacion;
     R.PA_Conducta = pc === "Sin dato" ? "" : C === "NNA" ? (pc === "Normal" ? "Control según calendario" : "Repetir 2 mediciones (≥ 3 min entre tomas), promediar; si persiste, derivar a médico (Clase 4 p. 45)")
       : pc.toLowerCase().includes("sospecha") ? "Perfil de PA y derivación a médico (Clase 7 p. 18)" : pc.toLowerCase().includes("pre-hiper") ? "Cambios en el estilo de vida (Clase 7 p. 18)"

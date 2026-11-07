@@ -196,6 +196,17 @@ details.mas .mas-n { color: var(--muted); }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); }
 .pager .btn { max-width: 100%; white-space: normal; text-align: left; }
 .pager .sec-nota { padding: 0; margin: 0; }
+/* novedades y aviso de actualización */
+.novedades-btn { margin-left: 12px; font-size: 13px; }
+.actualizar { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 8px 16px; background: #fff4dd; border-bottom: 1px solid #e8c77a; font-size: 14px; }
+.actualizar[hidden] { display: none; }
+.modal-fondo { position: fixed; inset: 0; background: rgba(20, 30, 32, .45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+.modal-fondo .modal { background: #fff; color: #1a1a1a; max-width: 620px; width: 100%; max-height: 85vh; overflow: auto; border-radius: 10px; padding: 22px 24px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.modal-fondo h2 { font-size: 19px; margin: 0 0 10px; }
+.modal-fondo ul { padding-left: 20px; margin: 0 0 12px; line-height: 1.5; } .modal-fondo li { margin: 5px 0; }
+.modal-fondo .acciones { display: flex; justify-content: flex-end; }
+table.fam input[type=text] { min-width: 220px; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+@media print { .actualizar, .modal-fondo, .novedades-btn { display: none !important; } }
 /* etapa 8: R24 detallado y TFC */
 table.r24d td select { max-width: 150px; }
 table.r24d td input[type=text]:not(.hora) { min-width: 110px; }
@@ -376,7 +387,9 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
     <div class="marca"><b>Atención Nutricional APS</b><span>Nutrición y Dietética · USS</span></div>
     <div class="top-esp"></div>
     <span class="guardado" id="estadoGuardado" aria-live="polite"></span>
+    <button class="link novedades-btn" data-a="ver-novedades" title="Ver los cambios de esta versión">Novedades</button>
   </div>
+  <div class="actualizar" id="avisoActualizar" hidden role="status"><span><b>Hay una versión nueva de la app.</b> Sus pacientes no se pierden: quedan guardados en este navegador.</span><button class="btn peq pri" data-a="actualizar-app">Actualizar ahora</button></div>
   <div class="aviso"><strong>Herramienta académica de práctica.</strong> Use solo datos ficticios o anonimizados. No reemplaza el juicio profesional.</div>
 </header>
 
@@ -384,13 +397,14 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
   <p class="vacio">Cargando…</p>
 </div>
 
-<script src="calc.js?v=18"></script>
+<script src="calc.js?v=19"></script>
 <script src="etapa2.js?v=11"></script>
 <script src="etapa3.js?v=5"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=1"></script>
-<script src="etapa6.js?v=6"></script>
+<script src="etapa6.js?v=7"></script>
 <script src="etapa7.js?v=2"></script>
+<script src="excel.js?v=2"></script>
 <script>
 "use strict";
 (async function () {
@@ -404,7 +418,38 @@ function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return
 function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ---------- datos ----------
-const VERSION_DATOS = "15";
+const VERSION_DATOS = "16";
+// Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
+const APP_VERSION = "2026-11-07.1";
+const CAMBIOS = [
+  { v: "2026-11-07.1", fecha: "07-11-2026", items: [
+    "Anamnesis social: al elegir «¿Con quién vive?» se pueden registrar los integrantes del hogar con su parentesco y edad.",
+    "La pregunta de lactancia ya no aparece en la anamnesis: ahora está en Datos del paciente y solo se muestra si la paciente no está embarazada.",
+    "Presión arterial del adulto: pre-hipertensión desde 130/85 (130-139/85-89); bajo eso se clasifica como normal.",
+    "Anamnesis clínica: nueva sección de examen físico (conjuntivas, cuello, pelo y uñas, mucosas), que también sale en el resumen.",
+    "Requerimientos NNA: de 5 a 9 años se sugiere el método rápido kcal/kg ± 15 % según la actividad física; en adolescentes (≥ 10 años), GEB × PAL.",
+    "Exportar e importar pacientes en Excel (.xlsx), uno a uno o «Respaldar todos». Los JSON antiguos se siguen pudiendo importar.",
+    "Aviso cuando hay una versión nueva y esta nota de novedades."] },
+];
+function mostrarNovedades(forzar) {
+  let visto = ""; try { visto = localStorage.getItem("ana_version_vista") || ""; } catch (e) { /* sin almacenamiento */ }
+  if (!forzar && (visto === APP_VERSION || !visto && !st.pacientes.length)) { try { localStorage.setItem("ana_version_vista", APP_VERSION); } catch (e) {} return; }
+  document.getElementById("novedades")?.remove();
+  const c = CAMBIOS[0];
+  document.body.insertAdjacentHTML("beforeend", `<div class="modal-fondo" id="novedades" role="dialog" aria-modal="true" aria-labelledby="novT"><div class="modal">
+    <h2 id="novT">Novedades de la app <span class="tag">${esc(c.fecha)}</span></h2>
+    <ul>${c.items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+    <p class="sec-nota">Sus pacientes siguen guardados. Recomendación: use «Respaldar todos (Excel)» de vez en cuando.</p>
+    <div class="acciones"><button class="btn pri" data-a="cerrar-novedades">Entendido</button></div></div></div>`);
+}
+// Revisa si se publicó una versión nueva (Vercel) mientras la app está abierta
+async function revisarActualizacion() {
+  try {
+    const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) return;
+    const j = await r.json();
+    if (j && j.version && j.version !== APP_VERSION) document.getElementById("avisoActualizar").hidden = false;
+  } catch (e) { /* sin conexión */ }
+}
 async function cargarJSON(p) { const r = await fetch(p + "?v=" + VERSION_DATOS, { cache: "no-cache" }); if (!r.ok) throw new Error(p); return r.json(); }
 let ESQ, LIS, CASOS, ESP, MED, CFLASH;
 const TAB = { cre: null, fri: null, t2: null, t3: null, t4: null, t5: null, t6: null, t7: null, listas: null, carhe: null, brk: null };
@@ -517,6 +562,7 @@ const condSec = {
   adolescente: (R) => R.GrupoEtario === "Adolescente",
   pc_activa: (R) => !!(R.PC && R.PC.activa),
   no_lactante: (R) => !esLactante(R),
+  familia: () => { const v = st.p ? datos().so_vive : ""; return !vacio(v) && v !== "Solo/a" && !/^Institución/.test(v); },
 };
 const esLactante = (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 24;
 // En una gestante adolescente no se muestran las preguntas pensadas para el niño (perinatales, cuidado, Tanner, lactancia)
@@ -545,6 +591,7 @@ const condCampo = {
   px_mor1: (R, D) => D.px_farm_si === "Sí", px_mor2: (R, D) => D.px_farm_si === "Sí", px_mor3: (R, D) => D.px_farm_si === "Sí", px_mor4: (R, D) => D.px_farm_si === "Sí",
   px_supl_lista: (R, D) => D.px_supl_si === "Sí",
   ges_deriv: (R) => !!(R.Embarazada || R.Nodriza),
+  so_lact: (R, D) => D.so_emb === "No" && condSec.mujer_fertil(R),
   px_viv_falta: (R, D) => String(D.so_vivienda || "").startsWith("Falta"),
   pc_gmfcs: (R, D) => D.pc_base === "Sí", pc_via: (R, D) => D.pc_base === "Sí" && D.pc_gmfcs === "V", pc_tono: (R, D) => D.pc_base === "Sí",
   pcef: (R) => R.Ciclo === "" || (R.Ciclo === "NNA" && !(typeof R.Edad_Meses_Aprox === "number" && R.Edad_Meses_Aprox > 36)),
@@ -635,13 +682,14 @@ function vistaInicio() {
         <button class="btn" data-a="nuevo" data-modo="completa" title="Todas las preguntas del portafolio">Nueva consulta completa</button></span>
         <span class="cargar-caso"><label for="selCaso" class="tag" style="font-size:13px;color:var(--muted)">Caso de prueba</label>
           <select id="selCaso">${opCasos}</select><button class="btn" data-a="caso">Cargar</button></span>
-        <label class="btn" for="impJSON">Importar JSON</label><input type="file" id="impJSON" accept=".json,application/json" hidden>
+        <label class="btn" for="impJSON" title="Archivo Excel exportado desde esta app (también acepta los JSON antiguos)">Importar Excel</label><input type="file" id="impJSON" accept=".xlsx,.json,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        ${st.pacientes.length ? '<button class="btn" data-a="respaldar" title="Descarga un Excel con todos sus pacientes y controles">Respaldar todos (Excel)</button>' : ""}
       </div>
     </div>
     <div class="recordatorio" role="note"><div><b>Recordatorio para el box:</b> ${esc(ESQ.recordatorio.replace(/^Antes de ir al box, l/, "L"))}</div></div>
     <div class="caja">${filas ? `<div class="tabla-w"><table class="pac"><thead><tr><th>Paciente</th><th>Grupo etario</th><th>Edad</th><th>Último control</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`
       : `<div class="vacio"><h2>Aún no hay pacientes</h2>Cree un paciente nuevo (para una gestante, marque sexo femenino y «¿Está embarazada actualmente?») o cargue uno de los 3 casos de prueba de la planilla (escolar con obesidad, adulta con DM2 y dislipidemia, adulto mayor con bajo peso) para ver la app funcionando.</div>`}</div>
-    <p class="nota-pie">Consulta flash completa: de la anamnesis al resumen imprimible (etapas 1 a 6 de 9). Los demás módulos aparecen en la navegación y se activan en las próximas etapas.</p>`;
+    <p class="nota-pie">Consulta flash o completa, de la anamnesis al resumen imprimible. Versión ${esc(APP_VERSION)} · <button class="link" data-a="ver-novedades">ver novedades</button>. Respalde sus pacientes con «Respaldar todos (Excel)».</p>`;
   $estado.textContent = textoModo();
 }
 
@@ -711,7 +759,7 @@ function vistaFicha() {
       <span class="ctrl"><label for="selCtrl">Control</label><select id="selCtrl">${opsCtrl}</select></span>
       <span class="seg modo-seg" role="radiogroup" aria-label="Tipo de consulta"><label><input type="radio" name="modoCons" data-a="modo" data-modo="flash" ${modoDe(p) === "flash" ? "checked" : ""}>Flash</label><label><input type="radio" name="modoCons" data-a="modo" data-modo="completa" ${modoDe(p) === "completa" ? "checked" : ""}>Completa</label></span>
       <button class="btn peq" data-a="nuevo-control">Nuevo control</button>
-      <button class="btn peq" data-a="exportar">Exportar JSON</button>
+      <button class="btn peq" data-a="exportar">Exportar Excel</button>
     </div>
     <div class="reloj" id="reloj" aria-label="Cronómetro de la consulta"></div>
     <div class="grid">
@@ -863,6 +911,7 @@ function renderModulo() {
     if (s.tabla === "r24") h += r24TablaHTML(flash);
     if (s.tabla === "lab") h += labTablaHTML(flash);
     if (s.tabla === "pauta") h += pautaTablaHTML();
+    if (s.tabla === "familia") h += familiaTablaHTML();
     if (s.tabla === "r24d") h += r24dTablaHTML();
     if (s.tabla === "tfc") h += tfcTablaHTML();
     if (s.tabla === "dist") h += distTablaHTML();
@@ -999,6 +1048,21 @@ function r24TablaHTML(flash) {
     <tbody>${rows.join("")}</tbody><tfoot><tr class="total"><td colspan="${flash ? 4 : 6}">Total intercambio${det.length ? " + R24 detallado" : ""}</td><td class="num" data-out="r24-t-porc"></td><td class="num" data-out="r24-t-kcal"></td><td class="num" data-out="r24-t-prot"></td><td class="num" data-out="r24-t-lip"></td><td class="num" data-out="r24-t-cho"></td><td></td></tr></tfoot></table></div>
     <p class="sec-nota">${n < 30 ? '<button class="btn peq" data-a="r24-mas">+ Agregar filas</button> ' : ""}${flash ? "Consulta flash: sin hora ni preparación. " : ""}Al elegir un alimento sin tiempo de comida, se copia el tiempo de la fila anterior.</p>
     ${det.length ? `<p class="sec-nota">R24 detallado (CARHE): ${det.length} alimento${det.length === 1 ? "" : "s"} (${esc(det.map((f) => f.alim.toLowerCase()).join(", "))}) <span data-out="r24-det-kcal"></span>. Se suman a los totales; se editan en la consulta completa (etapa 8).</p>` : ""}`;
+}
+// ---------- Integrantes del hogar ----------
+const PARENTESCOS = ["Pareja", "Hijo/a", "Madre", "Padre", "Hermano/a", "Abuelo/a", "Nieto/a", "Tío/a", "Primo/a", "Suegro/a", "Otro familiar", "Amigo/a o allegado/a"];
+function familiaTablaHTML() {
+  const D = datos(), nf = (v) => (vacio(v) ? "" : esc(v));
+  let ult = -1; for (let i = 0; i < 12; i++) if (!vacio(D[`fam_${pad2(i)}_par`]) || !vacio(D[`fam_${pad2(i)}_edad`])) ult = i;
+  const n = Math.min(12, Math.max(st.ui.famn || 0, ult + 2, typeof D.so_npers === "number" ? D.so_npers - 1 : 2, 1));
+  let h = `<datalist id="dlParentesco">${PARENTESCOS.map((o) => `<option value="${o}">`).join("")}</datalist><div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res fam"><thead><tr><th>#</th><th>Parentesco</th><th>Edad (años)</th><th></th></tr></thead><tbody>`;
+  for (let i = 0; i < n; i++) {
+    const p = `fam_${pad2(i)}_`;
+    h += `<tr><td class="num">${i + 1}</td><td><input type="text" list="dlParentesco" data-k="${p}par" value="${nf(D[p + "par"])}" placeholder="Ej.: madre, hijo, abuela" aria-label="Parentesco del integrante ${i + 1}" autocomplete="off"></td>
+      <td><span class="campo mini" data-campo="${p}edad"><input type="number" inputmode="numeric" data-k="${p}edad" min="0" max="120" step="1" value="${nf(D[p + "edad"])}" aria-label="Edad del integrante ${i + 1}"><span class="err" hidden></span></span></td>
+      <td><button type="button" class="x" data-a="fam-borrar" data-i="${i}" aria-label="Borrar integrante ${i + 1}" title="Borrar">×</button></td></tr>`;
+  }
+  return h + `</tbody></table></div><p class="sec-nota">${n < 12 ? '<button class="btn peq" data-a="fam-mas">+ Agregar integrante</button> ' : ""}Las filas se ajustan al N° de personas del hogar.</p>`;
 }
 // ---------- R24 detallado (CARHE) ----------
 function r24dNFilas() {
@@ -1282,7 +1346,8 @@ function asignar(k, v) {
     const y = window.scrollY; renderModulo(); window.scrollTo(0, y);
   }
   if (k === "pc_base") { const y = window.scrollY; vistaFicha(); window.scrollTo(0, y); }
-  else if (["so_emb", "sexo", "so_sgnac", "fnac", "feval", "ciclo_manual"].includes(k)) refrescarNav();
+  else if (["so_emb", "sexo", "so_sgnac", "fnac", "feval", "ciclo_manual", "so_lact"].includes(k)) refrescarNav();
+  else if (["so_vive", "so_npers"].includes(k)) { const y = window.scrollY; renderModulo(); window.scrollTo(0, y); }
   actualizar(); programarGuardado();
 }
 // ---------- lista desplegable de fármacos y suplementos ----------
@@ -1373,6 +1438,13 @@ $app.addEventListener("change", (e) => {
 // permite desmarcar un Sí/No haciendo clic otra vez
 let radioPrevio = null;
 $app.addEventListener("pointerdown", (e) => { const inp = e.target.closest(".seg label")?.querySelector("input"); radioPrevio = inp && inp.checked ? inp : null; });
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-a]"); if (!b || $app.contains(b)) return;
+  const a = b.dataset.a;
+  if (a === "ver-novedades") mostrarNovedades(true);
+  else if (a === "cerrar-novedades") { document.getElementById("novedades")?.remove(); try { localStorage.setItem("ana_version_vista", APP_VERSION); } catch (err) {} }
+  else if (a === "actualizar-app") { try { await ejecutarGuardado(); } catch (err) {} location.reload(); }
+});
 $app.addEventListener("click", async (e) => {
   const lab = e.target.closest(".seg label");
   if (lab && radioPrevio && radioPrevio.dataset.k && lab.contains(radioPrevio) && e.target === radioPrevio) { radioPrevio.checked = false; asignar(radioPrevio.dataset.k, ""); radioPrevio = null; return; }
@@ -1402,6 +1474,8 @@ $app.addEventListener("click", async (e) => {
   else if (a === "verif") { const v = document.querySelector('[data-out="verif-txt"]'); if (v) v.hidden = !v.hidden; }
   else if (a === "combo-abrir") { const inp = document.getElementById(b.dataset.for); if (inp) { if (combo && combo.input === inp) comboCerrar(); else { inp.focus(); comboAbrir(inp, true); } } }
   else if (a === "micro-todos") { st.ui.microTodos = b.checked; actualizar(); }
+  else if (a === "fam-mas") { st.ui.famn = Math.min(12, document.querySelectorAll("table.fam tbody tr").length + 1); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "fam-borrar") { const D = datos(), p = `fam_${pad2(+b.dataset.i)}_`; delete D[p + "par"]; delete D[p + "edad"]; programarGuardado(); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "rc-mas") { st.ui.rcn = Math.min(40, r24dNFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "rc-borrar") { const D = datos(), p = `rc_${pad2(+b.dataset.i)}_`; for (const f of ["tiempo", "hora", "prep", "grupo", "alim", "n", "g"]) delete D[p + f]; programarGuardado(); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "copiar-txt") { try { await navigator.clipboard.writeText(b.dataset.txt); toast("Texto copiado"); } catch (err) { toast("No se pudo copiar"); } }
@@ -1434,37 +1508,57 @@ $app.addEventListener("click", async (e) => {
     st.p.controles.push({ id: "c" + (st.p.controles.length + 1), datos: d }); st.ci = st.p.controles.length - 1;
     programarGuardado(); vistaFicha(); toast("Control nuevo creado con los datos del anterior");
   }
-  else if (a === "exportar") exportar();
+  else if (a === "exportar") exportar(false);
+  else if (a === "respaldar") exportar(true);
+  else if (a === "ver-novedades") mostrarNovedades(true);
+  else if (a === "cerrar-novedades") { document.getElementById("novedades")?.remove(); try { localStorage.setItem("ana_version_vista", APP_VERSION); } catch (e) {} }
+  else if (a === "actualizar-app") { try { await ejecutarGuardado(); } catch (e) {} location.reload(); }
   else if (a === "copiar") { const ta = document.getElementById("txtExport"); try { await navigator.clipboard.writeText(ta.value); toast("JSON copiado"); } catch (err) { ta.select(); } }
 });
 
-// ---------- exportar / importar ----------
-async function exportar() {
-  await ejecutarGuardado();
-  const obj = { formato: "atencion-nutricional-aps", version: 1, exportado: new Date().toISOString(), paciente: st.p };
-  const txt = JSON.stringify(obj, null, 1);
-  const nombre = (st.p.nombre || "paciente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").slice(0, 60) + ".json";
+// ---------- exportar / importar (Excel; los JSON antiguos se siguen pudiendo importar) ----------
+const nombreArchivo = (t) => String(t || "paciente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 60) || "paciente";
+function navTitulos() { const o = {}; for (const lista of Object.values(MODS)) for (const m of lista) if (m.id && !o[m.id]) o[m.id] = m.t; return o; }
+async function descargar(nombre, buf) {
   if (Store.dl) {
-    try { await Store.dl.save({ filename: nombre, data: txt }); toast("Archivo guardado"); return; }
+    try { await Store.dl.save({ filename: nombre, data: buf.slice(0) }); toast("Archivo guardado"); return; }
     catch (e) { if (e && e.code === "declined") return; }
   }
-  const m = document.getElementById("modulo");
-  m.insertAdjacentHTML("afterbegin", `<section class="sec"><h3>Exportar JSON</h3><p class="sec-nota">Esta vista no permite descargar archivos. Copie el texto y guárdelo como <b>${esc(nombre)}</b>.</p>
-    <div style="padding:10px 16px 16px"><textarea class="modal-txt" id="txtExport" readonly>${esc(txt)}</textarea><div class="acciones" style="margin-top:8px"><button class="btn peq" data-a="copiar">Copiar</button></div></div></section>`);
+  const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000); toast("Descargado: " + nombre);
+}
+async function exportar(todos) {
+  try {
+    if (st.p) await ejecutarGuardado();
+    const lista = todos ? st.pacientes : [st.p];
+    if (!lista.length) { toast("No hay pacientes para respaldar"); return; }
+    toast("Preparando Excel…");
+    const buf = await ExcelPac.exportar(lista, { ESQ, NAVT: navTitulos(), Calc, CAMPOS, TAB, version: APP_VERSION });
+    const f = new Date().toISOString().slice(0, 10);
+    await descargar(todos ? `respaldo_pacientes_${f}.xlsx` : `${nombreArchivo(st.p.nombre)}_${f}.xlsx`, buf);
+  } catch (e) { toast("No se pudo crear el Excel. Revise su conexión e intente de nuevo."); }
 }
 function importar(file) {
   if (!file) return;
-  const fr = new FileReader();
+  const fr = new FileReader(), esJSON = /\.json$/i.test(file.name);
   fr.onload = async () => {
     try {
-      const o = JSON.parse(fr.result);
-      const p = o && o.formato === "atencion-nutricional-aps" ? o.paciente : null;
-      if (!p || !Array.isArray(p.controles) || !p.controles.length) throw new Error("formato");
-      if (!/^[A-Za-z0-9_-]{1,80}$/.test(p.id || "") || st.pacientes.some((x) => x.id === p.id)) p.id = nuevoId();
-      st.pacientes.push(p); st.p = p; await ejecutarGuardado(); st.p = null; toast("Paciente importado"); vistaInicio();
-    } catch (e) { toast("El archivo no es un paciente exportado desde esta app."); }
+      let lista;
+      if (esJSON) {
+        const o = JSON.parse(fr.result), p = o && o.formato === "atencion-nutricional-aps" ? o.paciente : null;
+        if (!p || !Array.isArray(p.controles) || !p.controles.length) throw new Error("formato");
+        lista = [p];
+      } else lista = await ExcelPac.importar(fr.result, { CAMPOS });
+      let n = 0;
+      for (const p of lista) {
+        if (!/^[A-Za-z0-9_-]{1,80}$/.test(p.id || "") || st.pacientes.some((x) => x.id === p.id)) p.id = nuevoId();
+        migrar(p); sincronizarMeta(p); st.pacientes.push(p); st.p = p; await ejecutarGuardado(); n++;
+      }
+      st.p = null; toast(n === 1 ? "Paciente importado" : n + " pacientes importados"); vistaInicio();
+    } catch (e) { st.p = null; toast("El archivo no es un paciente exportado desde esta app."); }
   };
-  fr.readAsText(file);
+  if (esJSON) fr.readAsText(file); else fr.readAsArrayBuffer(file);
 }
 
 // ---------- vista oculta de pruebas (#pruebas) ----------
@@ -1518,7 +1612,7 @@ async function vistaPruebas() {
     let D = {};
     if (sc.entrada.__caso) { const i = CASOS.nombres.indexOf(sc.entrada.__caso); for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } }
     else D = Object.assign({}, sc.entrada);
-    const R = Calc.calcular(D, { T: TAB });
+    const R = Calc.calcular(D, { T: TAB, planilla: true });
     let n = 0, okn = 0, filas = "", malas = "";
     for (const [cell, path0, e] of sc.checks) {
       let path = path0;
@@ -1546,7 +1640,7 @@ async function vistaPruebas() {
   let hr = "";
   for (const [nm, arr] of Object.entries(REP2)) {
     const i = CASOS.nombres.indexOf(nm), D = {}; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; }
-    const R = Calc.calcular(D, { T: TAB });
+    const R = Calc.calcular(D, { T: TAB, planilla: true });
     hr += arr.map(([lab, path, e]) => { let g = get(R, path); if (typeof e === "number" && typeof g === "number") g = Math.round(g * 100) / 100; return fila(`${nm} · ${lab}`, e, g, igual(e, g)); }).join("");
   }
   html += `<div class="pr-caso caja" style="padding:14px"><h2>Etapa 2 · valores del REPORTE_PRUEBAS (Excel, 2 decimales)</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${hr}</tbody></table></div></div>`;
@@ -1573,7 +1667,7 @@ async function vistaPruebas() {
   let hr3 = "";
   for (const [nm, arr] of Object.entries(REP3)) {
     const i = CASOS.nombres.indexOf(nm), D = {}; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; }
-    const R = Calc.calcular(D, { T: TAB });
+    const R = Calc.calcular(D, { T: TAB, planilla: true });
     arr.push(["Rec24_Kcal = intercambio + detallado", 1]);
     R["Rec24_Kcal = intercambio + detallado"] = Math.abs(R.Rec24_Kcal - (R.R24.int.kcal + R.Det24_Kcal)) < 1e-9 ? 1 : 0;
     // el REPORTE trae valores mostrados con 2 decimales: se acepta la diferencia de redondeo (± 0,005)
@@ -1590,7 +1684,7 @@ async function vistaPruebas() {
     let D = {};
     if (sc.entrada.__caso) { const i = { "Caso 1 – NNA": 0, "Caso 2 – Adulto": 1, "Caso 3 – AM": 2 }[sc.entrada.__caso]; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } }
     for (const [k, v] of Object.entries(sc.entrada)) if (!k.startsWith("__")) D[k] = v;
-    const R = Calc.calcular(D, { T: TAB });
+    const R = Calc.calcular(D, { T: TAB, planilla: true });
     let n = 0, okn = 0, filas = "", malas = "";
     for (const [cell, path, e] of sc.checks) {
       const g = path.startsWith("!star:") ? (get(R, path.slice(6)) ? "★" : "") : get(R, path);
@@ -1617,7 +1711,7 @@ async function vistaPruebas() {
     return condCampo[k] ? condCampo[k](R, D) : true; });
   let hf = "", totF = 0, okF = 0;
   for (const [nm, sc] of Object.entries(PF)) {
-    const D = Object.assign({}, sc.entrada), R = Calc.calcular(D, { T: TAB });
+    const D = Object.assign({}, sc.entrada), R = Calc.calcular(D, { T: TAB, planilla: true });
     let n = 0, okn = 0, malas = "", filas = "";
     const add = (cell, e, g, ok) => { n++; if (ok) okn++; const tr = `<tr><td>${esc(cell)}</td><td class="v">${esc(JSON.stringify(e ?? ""))}</td><td class="v">${esc(JSON.stringify(g ?? ""))}</td><td class="${ok ? "ok" : "no"}">${ok ? "✔" : "✘"}</td></tr>`; filas += tr; if (!ok) malas += tr; };
     for (const k of Object.keys(sc.entrada)) { const vis = visibleFlash(k, R, D); add(`Se pregunta en flash: ${CAMPOS[k] ? CAMPOS[k].label : k}`, true, vis, vis); }
@@ -1643,7 +1737,7 @@ async function vistaPruebas() {
   for (const [nm, sc] of Object.entries(PT)) {
     let D = {};
     if (sc.entrada.__caso) { const i = CASOS.nombres.indexOf(sc.entrada.__caso); for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } } else D = Object.assign({}, sc.entrada);
-    const R = Calc.calcular(D, { T: TAB }); let n = 0, okn = 0, malas = "";
+    const R = Calc.calcular(D, { T: TAB, planilla: true }); let n = 0, okn = 0, malas = "";
     for (const [cell, p, e0] of sc.checks) { const e = e0 === null ? "" : e0, g = get(R, p); const ok = typeof e === "number" && typeof g === "number" ? Math.abs(e - g) < 1e-9 : String(e) === String(g ?? ""); n++; if (ok) { okn++; tot++; okT++; } else malas += fila(cell, e, g, ok); }
     totT += n; okTT += okn;
     ht += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(NOM3[nm] || nm)} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2>${malas ? `<div class="tabla-w"><table class="pr"><tbody>${malas}</tbody></table></div>` : ""}</div>`;
@@ -1678,6 +1772,26 @@ async function vistaPruebas() {
     totG += n; okG += okn;
     hg += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(c.titulo.replace(/^Flash · /, ""))} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable</th><th>Esperado (a mano)</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></div>`;
   }
+  // ----- decisiones docentes del 07-11-2026 (sin planilla: valores esperados según la indicación) -----
+  {
+    const base = { feval: "2026-11-07", fnac: "1986-05-01", sexo: "Femenino", peso: 65, talla: 160 };
+    const nna = (fnac, act) => ({ feval: "2026-11-07", fnac, sexo: "Masculino", peso: 25, talla: 122, actividad: act });
+    const R = (D) => Calc.calcular(D, { T: TAB });
+    const C = [
+      ["PA 125/82 → normal", R(Object.assign({ pa_pas: 125, pa_pad: 82 }, base)).PA_Clasificacion, "Normal"],
+      ["PA 132/80 → pre-HTA", R(Object.assign({ pa_pas: 132, pa_pad: 80 }, base)).PA_Clasificacion, "Pre-hipertensión (130-139/85-89)"],
+      ["PA 120/86 → pre-HTA", R(Object.assign({ pa_pas: 120, pa_pad: 86 }, base)).PA_Clasificacion, "Pre-hipertensión (130-139/85-89)"],
+      ["PA 140/90 → sospecha de HTA", R(Object.assign({ pa_pas: 140, pa_pad: 90 }, base)).PA_Clasificacion, "PA elevada ≥ 140/90: sospecha de HTA (realizar perfil)"],
+      ["NNA 5 años, intensa: método rápido", R(nna("2021-09-01", "Intensa")).Formula_Usada, Calc.LISTA_FORMULAS[4]],
+      ["NNA 5 años, intensa: + 15 %", R(nna("2021-09-01", "Intensa")).Ajuste_Rapido, 1.15],
+      ["NNA 7 años, ligera: − 15 %", R(nna("2019-09-01", "Ligera")).Ajuste_Rapido, 0.85],
+      ["NNA 7 años, ligera: método rápido", R(nna("2019-09-01", "Ligera")).Formula_Usada, Calc.LISTA_FORMULAS[4]],
+      ["NNA 12 años: GEB OMS × PAL", R(nna("2014-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
+      ["NNA 4 años: GEB OMS × PAL", R(nna("2022-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
+    ];
+    let fd = "", okd = 0; for (const [l, g, e] of C) { const ok = igual(e, g); if (ok) okd++; fd += fila(l, e, g, ok); }
+    html += `<h2 style="font-size:17px;margin:22px 0 10px">Decisiones docentes 07-11-2026 · ${okd} de ${C.length}</h2><div class="pr-caso caja" style="padding:14px"><div class="tabla-w"><table class="pr"><thead><tr><th>Comprobación</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${fd}</tbody></table></div></div>`;
+  }
   html += `<h2 style="font-size:17px;margin:22px 0 10px">Etapa 7 · gestante y nodriza · ${okG} de ${totG} comprobaciones</h2><p class="sec-nota" style="padding:0 0 10px">Sin planilla de referencia: los valores esperados se calcularon a mano con las reglas docentes (Guía Perinatal 2015, método de kcal extra, peso ideal IMC 21,7, nodriza + 500 kcal). También se revisa que cada dato se pregunte en modo flash.</p>` + hg;
   $app.innerHTML = `<div class="inicio-h"><div><h1>Pruebas · etapas 1 a 8</h1><p>Referencia: Planilla_Nutricional.xlsx y Planilla_NNA.xlsx recalculadas en LibreOffice (3 casos de la planilla, 7 casos de consulta flash y 17 escenarios), y REPORTE_PRUEBAS.md (Excel).</p></div>
     <button class="btn" data-a="volver">← Pacientes</button></div>
@@ -1690,5 +1804,9 @@ try { st.pacientes = await listarPacientes(); st.pacientes.forEach(migrar); }
 catch (e) { st.pacientes = []; $estado.textContent = "No se pudo leer la lista de pacientes. Recargue la página."; }
 if (location.hash === "#ficha") history.replaceState(null, "", "#inicio");
 ruta();
+if (location.hash !== "#pruebas") mostrarNovedades(false);
+setInterval(revisarActualizacion, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarActualizacion(); });
+revisarActualizacion();
 })();
 </script>

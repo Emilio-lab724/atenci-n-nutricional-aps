@@ -113,7 +113,8 @@
       <p class="hoja-aviso">Herramienta académica de práctica</p>
       <table class="hr"><tbody>
         ${sec("Paciente", tabla([["Nombre", D.nombre], ["RUT", D.rut], ["Sexo / edad", (D.sexo || "") + (R.Edad_Texto ? " · " + R.Edad_Texto : "")], ["Fecha evaluación", fecha(D.feval)],
-          ["Ciclo vital / grupo", R.Ciclo ? R.Ciclo + " · " + R.GrupoEtario : ""], ["Programa", R.Prox_Programa]]))}
+          ["Ciclo vital / grupo", R.Ciclo ? R.Ciclo + " · " + R.GrupoEtario : ""], ["Programa", R.Prox_Programa],
+          ["Vive con", (D.so_vive || "") + (() => { const f = []; for (let i = 0; i < 12; i++) { const k = "fam_" + String(i).padStart(2, "0") + "_", pa = D[k + "par"], ed = D[k + "edad"]; if (pa || isNum(ed)) f.push((pa || "integrante") + (isNum(ed) ? " (" + ed + ")" : "")); } return f.length ? ": " + f.join(", ") : ""; })()]]))}
         ${sec("Evaluación", tabla([["Peso / talla", R.Peso === "" ? "" : f(R.Peso, 1) + " kg" + (R.Talla_cm === "" ? "" : " · " + f(R.Talla_cm, 1) + " cm")], ["IMC", isNum(R.IMC) ? f(R.IMC, 1) + " kg/m²" : ""],
           ["Calificación nutricional", vacioTxt(R.Calificacion_Nutricional) ? "" : R.Calificacion_Nutricional + (vacioTxt(R.Indicador_Ref) ? "" : " según " + R.Indicador_Ref)], ["Talla", nna && !R.Embarazada ? R.Dx_Talla : ""],
           ["Puntaje Z", nna && !R.Embarazada ? R.Z_Ref : ""],
@@ -123,7 +124,8 @@
             ["Kcal extra por embarazo", R.GES.extra ? f(R.GES.extra, 0) + " kcal/día (meta " + f(R.GES.meta, 1) + " kg)" : ""]] : []),
           ...(R.Nodriza ? [["Nodriza", isNum(D.nod_meses) ? f(D.nod_meses, 0) + " meses posparto" : "Sí"]] : []), ["Circunferencia de cintura", D.cc ? D.cc + " cm · " + R.Riesgo_CC : ""],
           ["Presión arterial", R.PAS === "" ? "" : R.PAS + "/" + R.PAD + " mmHg"], ["Clasificación PA", R.PAS === "" ? "" : R.PA_Clasificacion],
-          ["Riesgo cardiovascular", R.RCV_Cat], ["Exámenes alterados", /^Sin exámenes registrados/.test(lab) ? "" : lab]]))}
+          ["Riesgo cardiovascular", R.RCV_Cat],
+          ["Examen físico", [D.ef_conj ? "conjuntivas " + D.ef_conj.toLowerCase() : "", Array.isArray(D.ef_cuello) && D.ef_cuello.length ? "cuello: " + D.ef_cuello.join(", ").toLowerCase() : "", D.ef_pelo ? "pelo y uñas " + D.ef_pelo.toLowerCase() : "", Array.isArray(D.ef_mucosas) && D.ef_mucosas.length ? "mucosas " + D.ef_mucosas.join(", ").toLowerCase() : ""].filter(Boolean).join(" · ")], ["Exámenes alterados", /^Sin exámenes registrados/.test(lab) ? "" : lab]]))}
         ${sec("Requerimientos", tabla([["Peso usado", R.Peso_Usado === "" ? "" : f(R.Peso_Usado, 1) + " kg (" + R.PesoTipo + ")"], ["Fórmula", R.Formula_Usada],
           ["Energía", isNum(R.GET_Final) ? f(R.GET_Final, 0) + " kcal/día · " + f(R.Kcal_Kg, 1) + " kcal/kg · " + R.Nom_Kcal : ""], ["VHT", isNum(R.VHT) ? f(R.VHT, 0) + " ml/día (" + f(R.VHT_Vasos, 1) + " vasos)" : ""],
           ["Proteínas", isNum(R.Prot_g) ? f(R.Prot_g, 1) + " g · " + f(R.Prot_Gkg, 2) + " g/kg · " + f(R.Prot_Pct, 0) + " % · " + R.Prot_Nom : ""], ["Lípidos", isNum(R.Lip_g) ? f(R.Lip_g, 1) + " g · " + R.Lip_Pct + " % · " + R.Lip_Nom : ""],
