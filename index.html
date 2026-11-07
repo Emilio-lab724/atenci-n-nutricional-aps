@@ -1,0 +1,1694 @@
+<meta charset="utf-8">
+<title>Atención Nutricional APS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: herramienta de box clínico — barra superior con aviso, navegación por módulos a la izquierda,
+   formulario al centro, panel de resultados clave a la derecha. Neutros con sesgo petróleo, un acento. */
+:root {
+  --bg: #f3f6f5; --surface: #ffffff; --surface-2: #eaf0ef; --line: #d3dddb; --line-strong: #b7c6c3;
+  --fg: #182423; --muted: #586b68; --accent: #0d5a5e; --accent-fg: #ffffff; --accent-soft: #dcebea;
+  --ok: #23704a; --ok-bg: #e2f2e8; --warn: #9a5a00; --warn-bg: #fdefd7; --bad: #a8261e; --bad-bg: #fbe2df;
+  --focus: #1b7f85;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1615; --surface: #162120; --surface-2: #1c2a29; --line: #2b3b39; --line-strong: #3d524f;
+  --fg: #e1ebe9; --muted: #98aba8; --accent: #62b4b6; --accent-fg: #0b1615; --accent-soft: #1b3333;
+  --ok: #7cc89c; --ok-bg: #16301f; --warn: #e8b25c; --warn-bg: #36280f; --bad: #f08b80; --bad-bg: #3b1916;
+  --focus: #7fd0d2; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1615; --surface: #162120; --surface-2: #1c2a29; --line: #2b3b39; --line-strong: #3d524f;
+  --fg: #e1ebe9; --muted: #98aba8; --accent: #62b4b6; --accent-fg: #0b1615; --accent-soft: #1b3333;
+  --ok: #7cc89c; --ok-bg: #16301f; --warn: #e8b25c; --warn-bg: #36280f; --bad: #f08b80; --bad-bg: #3b1916;
+  --focus: #7fd0d2; color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--sans); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* barra superior */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.marca { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.marca b { font-size: 16px; font-weight: 600; letter-spacing: .01em; }
+.marca span { color: var(--muted); font-size: 13px; }
+.top-esp { flex: 1; }
+.guardado { font-size: 12.5px; color: var(--muted); }
+.aviso { background: var(--accent-soft); color: var(--fg); font-size: 12.5px; padding-block: 6px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-top: 1px solid var(--line); }
+.aviso strong { font-weight: 600; }
+
+.wrap { padding-block: 18px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1440px; margin: 0 auto; }
+
+/* botones */
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); background: var(--surface); padding: 7px 12px; border-radius: var(--r); cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.pri { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.peq { padding: 4px 9px; font-size: 13px; }
+.btn.peligro { color: var(--bad); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+/* lista de pacientes */
+.inicio-h { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+.inicio-h h1 { font-size: 22px; font-weight: 600; }
+.inicio-h p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.caja { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.tabla-w { overflow-x: auto; }
+table.pac { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.pac th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.pac td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.pac tr:last-child td { border-bottom: 0; }
+table.pac tr.fila:hover td { background: var(--surface-2); }
+.vacio { padding: 28px 18px; color: var(--muted); }
+.vacio h2 { font-size: 16px; color: var(--fg); margin-bottom: 6px; font-weight: 600; }
+.chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.acc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.cargar-caso { display: flex; gap: 6px; align-items: center; }
+.cargar-caso select { padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
+.nota-pie { margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+/* ficha */
+.ficha-h { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
+.ficha-h h1 { font-size: 20px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.ficha-h .ctrl { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.ficha-h select { padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
+.grid { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; gap: 18px; align-items: start; }
+nav.mods { position: sticky; top: 112px; display: flex; flex-direction: column; gap: 1px; }
+nav.mods .grupo { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 12px 10px 4px; }
+nav.mods button { text-align: left; border: 0; background: none; padding: 6px 10px; border-radius: var(--r); cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+nav.mods button:hover:not([disabled]) { background: var(--surface-2); }
+nav.mods button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+nav.mods button[disabled] { color: var(--muted); opacity: .7; cursor: default; }
+nav.mods button small { font-size: 11px; font-weight: 400; color: var(--muted); white-space: nowrap; }
+
+main.modulo { min-width: 0; }
+.mod-h { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.mod-h h2 { font-size: 18px; font-weight: 600; }
+.info { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); cursor: pointer; font: 600 12px/1 var(--mono); display: inline-grid; place-items: center; flex: none; }
+.info:hover { color: var(--accent); border-color: var(--accent); }
+.fuente { font-size: 13px; color: var(--muted); background: var(--surface); border: 1px dashed var(--line-strong); border-radius: var(--r); padding: 8px 10px; margin: -4px 0 12px; }
+
+section.sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 14px; }
+section.sec > h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 12px 16px 0; }
+.sec-nota { font-size: 13px; color: var(--muted); padding: 4px 16px 0; }
+.campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px 18px; padding: 14px 16px 16px; }
+.campo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.campo.ancho { grid-column: 1 / -1; }
+.campo label, .campo .lbl { font-size: 13.5px; color: var(--fg); }
+.campo .tag { font-size: 11px; color: var(--muted); }
+.campo input[type=text], .campo input[type=number], .campo input[type=date], .campo select, .campo textarea {
+  width: 100%; padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); min-width: 0; }
+.campo input:hover, .campo select:hover { border-color: var(--muted); }
+.campo .err { color: var(--bad); font-size: 12.5px; }
+.campo.invalido input { border-color: var(--bad); }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden; align-self: flex-start; }
+.seg label { position: relative; padding: 6px 14px; cursor: pointer; font-size: 14px; border-left: 1px solid var(--line-strong); }
+.seg label:first-child { border-left: 0; }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; margin: 0; }
+.seg label:has(input:checked) { background: var(--accent); color: var(--accent-fg); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 13.5px; cursor: pointer; }
+.checks label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+
+/* resultados calculados */
+.calc { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 6px 16px; padding: 14px 16px 4px; font-size: 14px; }
+.calc dt { color: var(--muted); }
+.calc dd { margin: 0; }
+.estado { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 13.5px; }
+.estado.normal { background: var(--ok-bg); color: var(--ok); }
+.estado.riesgo { background: var(--warn-bg); color: var(--warn); }
+.estado.alterado { background: var(--bad-bg); color: var(--bad); }
+.verif { font-size: 12px; color: var(--warn); cursor: help; border-bottom: 1px dotted var(--warn); white-space: nowrap; background: none; border-top: 0; border-left: 0; border-right: 0; padding: 0; }
+.verif-txt { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+.alertas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.alertas li { padding: 7px 10px; border-radius: var(--r); background: var(--warn-bg); color: var(--fg); font-size: 14px; border-left: 3px solid var(--warn); }
+.alertas-box { padding: 14px 16px 16px; }
+.callout { margin: 0 16px 14px; padding: 10px 12px; border-radius: var(--r); background: var(--accent-soft); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; font-size: 14px; }
+
+/* actividad física, fármacos, recordatorio */
+.ayuda { font-size: 12.5px; color: var(--muted); }
+.niveles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.nivel { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; font-size: 13.5px; background: var(--surface); }
+.nivel.sel { border-color: var(--accent); background: var(--accent-soft); }
+.nivel b { display: block; font-weight: 600; }
+.nivel .meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.meds { display: flex; flex-direction: column; gap: 8px; }
+.med { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .8fr) minmax(0, 1.6fr) auto; gap: 8px; align-items: start; padding: 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.med input { width: 100%; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); min-width: 0; }
+.med .func-auto { border-color: var(--accent); }
+.med small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.recordatorio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; margin-bottom: 14px; border-radius: var(--r); background: var(--warn-bg); border: 1px solid var(--line); font-size: 14px; }
+.recordatorio b { font-weight: 600; }
+@media (max-width: 760px) { .med { grid-template-columns: minmax(0, 1fr); } }
+
+/* resultados y curvas */
+table.res td { font-variant-numeric: tabular-nums; }
+.chart-box { padding: 4px 16px 10px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.tabs button { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.grafico { overflow-x: auto; }
+.grafico svg { width: 100%; min-width: 520px; height: auto; display: block; }
+.grafico .gb { stroke: none; }
+.grafico .gok { fill: var(--ok-bg); } .grafico .gwarn { fill: var(--warn-bg); } .grafico .gbad { fill: var(--bad-bg); }
+.grafico .gg { stroke: var(--line); stroke-width: 1; }
+.grafico .gl { fill: none; stroke: var(--muted); stroke-width: 1.2; opacity: .8; }
+.grafico .g0 { stroke: var(--ok); stroke-width: 2; opacity: 1; }
+.grafico .glow { stroke: var(--bad); stroke-width: 2; stroke-dasharray: 5 4; opacity: 1; }
+.grafico .gt { fill: var(--muted); font: 11px var(--sans); }
+.grafico .gz { font: 600 10.5px var(--mono); }
+.grafico .gax { fill: var(--fg); font-size: 12px; }
+.grafico .gtray { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 3 3; }
+.grafico .gp { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.grafico .gpa { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding-left: 0 !important; }
+.sw { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; }
+.sw.gok { background: var(--ok-bg); border: 1px solid var(--ok); } .sw.gwarn { background: var(--warn-bg); border: 1px solid var(--warn); } .sw.gbad { background: var(--bad-bg); border: 1px solid var(--bad); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.dot.a { background: var(--surface); border: 2px solid var(--accent); }
+
+/* esenciales / opcionales */
+.flash-nota { margin: -4px 0 12px; padding: 8px 12px; border-radius: var(--r); background: var(--accent-soft); font-size: 13.5px; }
+.modo-seg label { padding: 4px 12px; font-size: 13px; }
+.nuevo-grupo { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+details.mas { margin: -4px 16px 14px; border: 1px dashed var(--line-strong); border-radius: var(--r); }
+section.sec > h3 + details.mas, section.sec > .sec-nota + details.mas { margin-top: 12px; }
+details.mas > summary { cursor: pointer; padding: 8px 12px; font-size: 13.5px; color: var(--accent); list-style: none; }
+details.mas > summary::-webkit-details-marker { display: none; }
+details.mas > summary::before { content: "＋ "; }
+details.mas[open] > summary::before { content: "－ "; }
+details.mas .mas-n { color: var(--muted); }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.pager .btn { max-width: 100%; white-space: normal; text-align: left; }
+.pager .sec-nota { padding: 0; margin: 0; }
+/* etapa 8: R24 detallado y TFC */
+table.r24d td select { max-width: 150px; }
+table.r24d td input[type=text]:not(.hora) { min-width: 110px; }
+table.tfc td select { min-width: 90px; }
+/* etapa 7: gestante */
+ol.pasos { list-style: none; margin: 8px 16px 10px; padding: 0; border: 1px solid var(--line); border-radius: var(--r); }
+ol.pasos li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: baseline; padding: 7px 12px; border-bottom: 1px solid var(--line); }
+ol.pasos li:last-child { border-bottom: none; background: #eef4f4; font-weight: 600; }
+ol.pasos .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.aviso-g { margin: 6px 16px 10px; padding: 8px 12px; border-left: 3px solid #c77700; background: #fff6e6; font-size: 13.5px; }
+table.res tr.sel td { background: #e8f1f1; font-weight: 600; }
+/* etapa 6: cierre */
+p.dni-txt { font-size: 15px; }
+b.dni-panel { font-weight: 400; font-size: 12.5px; line-height: 1.4; display: block; }
+ul.obj-est, ul.obj-sug, ul.deriv { margin: 0; padding: 0 0 0 18px; }
+ul.obj-sug { list-style: none; padding: 0; }
+ul.obj-sug li { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+ul.obj-sug li span { flex: 1; }
+ul.deriv { padding: 10px 16px 10px 34px; } ul.deriv li { margin: 3px 0; }
+.bloom { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 12px 16px; }
+.bloom div { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; font-size: 12.5px; }
+.bloom b { display: block; color: var(--accent); margin-bottom: 4px; }
+.hoja { margin: 12px 16px 16px; padding: 18px 20px; border: 1px solid var(--line); background: #fff; color: #1a1a1a; font-size: 12px; }
+.hoja h2 { font-size: 16px; margin: 0 0 2px; }
+.hoja-aviso { font-size: 10.5px; color: #555; margin: 0 0 8px; }
+table.hr { width: 100%; border-collapse: collapse; }
+table.hr th, table.hr td { border: 1px solid #cfd6d6; padding: 3px 6px; text-align: left; vertical-align: top; font-size: 11.5px; }
+table.hr th { background: #f2f5f5; font-weight: 600; width: 17%; }
+table.hr tr.sec td { background: #e3ecec; font-weight: 700; text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; }
+table.hr td.txt { line-height: 1.4; } table.hr ol { margin: 0; padding-left: 18px; }
+.hoja .firma { margin-top: 18px; font-size: 11.5px; }
+#printHost { display: none; }
+@media print {
+  @page { size: letter; margin: 11mm; }
+  body.imprimiendo > *:not(#printHost) { display: none !important; }
+  body.imprimiendo { background: #fff; }
+  body.imprimiendo #printHost { display: block; }
+  #printHost .hoja { margin: 0; border: none; padding: 0; font-size: 10.5px; }
+  #printHost table.hr th, #printHost table.hr td { font-size: 9.6px; padding: 2px 5px; }
+  #printHost .firma { margin-top: 10px; }
+}
+/* etapa 5: laboratorio */
+table.labt tr.grupo-f td { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+table.labt .campo.mini input { width: 86px; padding: 4px 6px; }
+table.labt td.num { white-space: nowrap; }
+/* etapa 4: R24 */
+.dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+@media (max-width: 900px) { .dos-col { grid-template-columns: 1fr; } }
+p.concl { margin: 12px 16px 16px; padding: 12px 14px; background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 4px; line-height: 1.55; }
+table.r24 { font-size: 13px; }
+table.r24 th, table.r24 td { padding-left: 5px; padding-right: 5px; }
+table.r24 td { vertical-align: top; }
+table.r24 select { padding: 4px 2px; font-size: 13px; max-width: 108px; }
+table.r24 input[type=text] { padding: 4px 6px; font-size: 13.5px; width: 100%; min-width: 90px; }
+table.r24 input.hora { width: 64px; min-width: 64px; }
+table.r24 td.alim { min-width: 210px; }
+table.r24 td.alim .combo { position: relative; }
+table.r24 small.med { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+table.r24 .campo.mini input { width: 58px; padding: 4px 5px; }
+table.r24 button.x { border: none; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 2px 6px; }
+table.r24 button.x:hover { color: var(--bad); }
+.err-t { color: var(--bad); }
+/* etapa 3: requerimientos */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 16px 4px; }
+.kpi { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kpi > span { font-size: 12px; color: var(--muted); }
+.kpi > b { font-size: 18px; font-weight: 600; }
+.kpi > b .estado { font-family: var(--sans); font-size: 14px; }
+.kpi > small { font-size: 12px; color: var(--muted); line-height: 1.3; }
+h4.sub { margin: 14px 16px 2px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+table.res tr.usada td { background: var(--accent-soft); }
+table.res tr.total td { font-weight: 600; border-top: 1px solid var(--line-strong); }
+table.res td.fuente-c { font-size: 12px; color: var(--muted); min-width: 160px; }
+.sec-nota.verif-n { color: var(--warn); font-size: 12.5px; }
+b.star { color: var(--accent); }
+table.micro td { vertical-align: middle; }
+table.micro .campo.mini { display: block; margin: 0; }
+table.micro .campo.mini input { width: 96px; padding: 4px 6px; }
+table.micro select { padding: 3px 4px; font-size: 13px; }
+table.micro small { color: var(--muted); }
+.chk-inline { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+details.ajustes { margin: 8px 16px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+details.ajustes > summary { cursor: pointer; padding: 8px 12px; font-size: 13.5px; color: var(--accent); font-weight: 500; }
+details.ajustes > summary span { color: var(--muted); font-weight: 400; }
+details.ajustes > .campos { padding-top: 4px; }
+details.mas > .campos { padding-top: 4px; }
+.mod-h .todas { margin-left: auto; font-size: 13px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+/* cronómetro */
+.reloj { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: -4px 0 14px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.reloj-izq { display: flex; align-items: center; gap: 8px; }
+.reloj-t { font-size: 18px; font-weight: 600; min-width: 62px; }
+.reloj-barra { position: relative; flex: 1 1 360px; display: flex; gap: 2px; height: 26px; min-width: 0; }
+.seg-r { background: var(--surface-2); border-radius: 3px; display: flex; align-items: center; padding: 0 6px; overflow: hidden; min-width: 0; }
+.seg-r span { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-r.hecho { background: var(--accent-soft); }
+.seg-r.act { background: var(--accent-soft); outline: 1.5px solid var(--accent); }
+.seg-r.act span { color: var(--accent); font-weight: 600; }
+.reloj-marca { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--accent); transform: translateX(-1px); }
+.reloj-nota { font-size: 12px; color: var(--muted); }
+.pasado { color: var(--warn); }
+
+/* buscador de fármacos */
+.combo { position: relative; display: flex; }
+.combo input { padding-right: 30px !important; }
+.combo-btn { position: absolute; right: 2px; top: 2px; bottom: 2px; width: 26px; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 13px; }
+.combo-lista { position: absolute; left: 0; top: calc(100% + 2px); z-index: 30; width: min(460px, 86vw); max-height: 260px; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+.combo-op { padding: 7px 10px; cursor: pointer; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+.combo-op:last-child { border-bottom: 0; }
+.combo-op b { font-weight: 600; font-size: 14px; }
+.combo-op span { font-size: 12.5px; color: var(--muted); }
+.combo-op:hover, .combo-op.act { background: var(--accent-soft); }
+.combo-vacio { padding: 10px; font-size: 13px; color: var(--muted); }
+/* vacunas */
+ul.vac { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+ul.vac li { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: var(--r); background: var(--surface-2); font-size: 13.5px; }
+ul.vac li em { font-style: normal; font-size: 12px; }
+ul.vac li.toca em { color: var(--ok); } ul.vac li.prox { opacity: .75; } ul.vac li.prox em { color: var(--muted); }
+@media (max-width: 760px) { ul.vac li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* Tanner */
+.tanner { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.tanner figure { max-width: 640px; margin: 0; border: 1px solid var(--line); border-radius: var(--r); padding: 8px; background: #fff; overflow-x: auto; }
+.tanner figure img { display: block; max-width: 100%; height: auto; }
+.tanner figcaption { font-size: 12px; color: #4d5f5c; margin-top: 4px; }
+.tanner .desc { font-size: 14px; background: var(--surface-2); border-radius: var(--r); padding: 8px 10px; }
+.tanner-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+
+/* panel lateral */
+aside.panel { position: sticky; top: 112px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+aside.panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 12px 14px 4px; }
+.kv { display: flex; flex-direction: column; padding: 4px 14px 12px; }
+.kv > div { display: flex; flex-direction: column; gap: 1px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.kv > div:last-child { border-bottom: 0; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-weight: 500; font-size: 14.5px; overflow-wrap: anywhere; }
+.kv .pend { color: var(--muted); font-weight: 400; font-size: 13px; }
+.panel-alertas { padding: 0 14px 12px; font-size: 13px; }
+.panel-alertas ul { margin: 4px 0 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.panel-alertas li { color: var(--warn); }
+
+/* pruebas */
+.pr-caso { margin-bottom: 18px; }
+.pr-caso h2 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+table.pr { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.pr th, table.pr td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.pr th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ok { color: var(--ok); font-weight: 600; } .no { color: var(--bad); font-weight: 600; }
+.resumen-pr { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.modal-txt { width: 100%; min-height: 160px; font: 12px/1.4 var(--mono); padding: 8px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface-2); }
+.toast { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 9px 14px; border-radius: var(--r); font-size: 14px; z-index: 20; max-width: calc(100% - 32px); }
+
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: 200px minmax(0, 1fr); }
+  aside.panel { grid-column: 1 / -1; position: static; order: -1; }
+  aside.panel .kv { flex-direction: row; flex-wrap: wrap; gap: 0 22px; }
+  aside.panel .kv > div { border-bottom: 0; }
+  nav.mods { top: 112px; }
+}
+@media (max-width: 760px) {
+  .marca span { display: none; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  nav.mods { position: static; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; }
+  nav.mods .grupo { display: none; }
+  nav.mods button { white-space: nowrap; flex: none; }
+  nav.mods button[disabled] { display: none; }
+  .campos { grid-template-columns: minmax(0, 1fr); }
+  .calc { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  .calc dd { margin-bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="marca"><b>Atención Nutricional APS</b><span>Nutrición y Dietética · USS</span></div>
+    <div class="top-esp"></div>
+    <span class="guardado" id="estadoGuardado" aria-live="polite"></span>
+  </div>
+  <div class="aviso"><strong>Herramienta académica de práctica.</strong> Use solo datos ficticios o anonimizados. No reemplaza el juicio profesional.</div>
+</header>
+
+<div class="wrap" id="app">
+  <p class="vacio">Cargando…</p>
+</div>
+
+<script src="calc.js?v=18"></script>
+<script src="etapa2.js?v=11"></script>
+<script src="etapa3.js?v=5"></script>
+<script src="etapa4.js?v=1"></script>
+<script src="etapa5.js?v=1"></script>
+<script src="etapa6.js?v=6"></script>
+<script src="etapa7.js?v=2"></script>
+<script>
+"use strict";
+(async function () {
+const $app = document.getElementById("app");
+const $estado = document.getElementById("estadoGuardado");
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const vacio = (v) => v === undefined || v === null || v === "";
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function hoy() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return m ? `${m[3]}-${m[2]}-${m[1]}` : "—"; }
+function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// ---------- datos ----------
+const VERSION_DATOS = "15";
+async function cargarJSON(p) { const r = await fetch(p + "?v=" + VERSION_DATOS, { cache: "no-cache" }); if (!r.ok) throw new Error(p); return r.json(); }
+let ESQ, LIS, CASOS, ESP, MED, CFLASH;
+const TAB = { cre: null, fri: null, t2: null, t3: null, t4: null, t5: null, t6: null, t7: null, listas: null, carhe: null, brk: null };
+try {
+  [ESQ, LIS, CASOS, ESP, MED, TAB.cre, TAB.fri, TAB.t2, TAB.t3, CFLASH, TAB.t4, TAB.t5, TAB.t6, TAB.t7] = await Promise.all(["data/esquema.json", "data/listas.json", "data/casos.json", "data/esperado.json", "data/medicamentos.json",
+    "data/crecimiento.json", "data/frisancho.json", "data/tablas2.json", "data/tablas3.json", "data/casos_flash.json", "data/tablas4.json", "data/tablas5.json", "data/tablas6.json", "data/tablas7.json"].map(cargarJSON));
+} catch (e) { $app.innerHTML = `<p class="vacio">No se pudieron cargar las tablas de la app (${esc(e.message)}). Recargue la página.</p>`; return; }
+const CAMPOS = ESQ.campos, LISTAS = Object.assign({}, LIS.listas, LIS.listas_pc);
+TAB.listas = LIS.listas; // puntajes del EMPAM: el motor busca la posición de cada respuesta en su lista
+let cargandoBrooks = null;
+// Tabla CARHE (R24 detallado): se carga solo si el paciente tiene alimentos en el R24 detallado
+let cargandoCarhe = null;
+function asegurarCarhe() {
+  if (TAB.carhe || cargandoCarhe) return cargandoCarhe;
+  return (cargandoCarhe = cargarJSON("data/carhe.json").then((b) => { TAB.carhe = b; if (st.p) actualizar(); }).catch(() => { cargandoCarhe = null; toast("No se pudo cargar la tabla CARHE. Revise la conexión."); }));
+}
+function asegurarBrooks() {
+  if (TAB.brk || cargandoBrooks) return;
+  cargandoBrooks = cargarJSON("data/brooks.json").then((b) => { TAB.brk = b; actualizar(); }).catch(() => { cargandoBrooks = null; toast("No se pudieron cargar las curvas Brooks. Revise la conexión."); });
+}
+
+// ---------- almacenamiento ----------
+const Store = { modo: "local", db: null, uid: null, dl: null };
+const LKEY = "atencion_nutricional_aps_v1";
+async function conTiempo(p, ms) { return Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]); }
+async function iniciarStore() {
+  try {
+    if (window.claude && window.claude.use) {
+      const [db, user, dl] = await Promise.all([conTiempo(claude.use("db"), 10000), conTiempo(claude.use("user"), 10000), conTiempo(claude.use("downloads"), 10000)]);
+      Store.dl = dl;
+      const uid = user ? await conTiempo(user.id(), 10000) : null;
+      if (db && uid) { Store.db = db; Store.uid = uid; Store.modo = "nube"; }
+    }
+  } catch (e) { /* queda en modo local */ }
+}
+function leerLocal() { try { return JSON.parse(localStorage.getItem(LKEY) || "{}"); } catch (e) { return {}; } }
+function escribirLocal(m) { try { localStorage.setItem(LKEY, JSON.stringify(m)); return true; } catch (e) { return false; } }
+async function listarPacientes() {
+  if (Store.modo === "nube") {
+    const snap = await conTiempo(Store.db.collection("data/users/" + Store.uid).get(), 10000);
+    if (!snap) throw new Error("tiempo");
+    return snap.docs.map((d) => d.data()).filter(Boolean);
+  }
+  return Object.values(leerLocal());
+}
+async function guardarPaciente(p) {
+  p.actualizado = new Date().toISOString();
+  if (Store.modo === "nube") { await Store.db.collection("data/users/" + Store.uid).doc(p.id).set(JSON.parse(JSON.stringify(p))); return; }
+  const m = leerLocal(); m[p.id] = p; if (!escribirLocal(m)) throw new Error("local");
+}
+async function borrarPaciente(id) {
+  if (Store.modo === "nube") { await Store.db.collection("data/users/" + Store.uid).doc(id).delete(); return; }
+  const m = leerLocal(); delete m[id]; escribirLocal(m);
+}
+
+// ---------- estado ----------
+const st = { pacientes: [], p: null, ci: 0, mod: "datos", confirmar: null, verFuente: null, ui: { mas: {}, todas: false } };
+let tGuardar = null, guardando = false, pendiente = false;
+function textoModo() { return Store.modo === "nube" ? "Guardado en su cuenta (privado)" : "Sin sesión: se guarda solo en este navegador"; }
+function programarGuardado() {
+  $estado.textContent = "Cambios sin guardar…";
+  clearTimeout(tGuardar); tGuardar = setTimeout(ejecutarGuardado, 700);
+}
+async function ejecutarGuardado() {
+  if (!st.p) return;
+  if (guardando) { pendiente = true; return; }
+  guardando = true;
+  try { sincronizarMeta(st.p); await guardarPaciente(st.p); $estado.textContent = "Guardado · " + textoModo(); }
+  catch (e) { $estado.textContent = e && e.code === "quota_exceeded" ? "No se pudo guardar: el espacio de la app está lleno. Elimine pacientes que ya no use." : "No se pudo guardar. Revise la conexión; los cambios siguen en pantalla."; }
+  guardando = false;
+  if (pendiente) { pendiente = false; ejecutarGuardado(); }
+}
+function sincronizarMeta(p) {
+  const d = p.controles[p.controles.length - 1].datos;
+  p.nombre = d.nombre || ""; p.rut = d.rut || ""; p.fnac = d.fnac || "";
+}
+const ctrl = () => st.p.controles[st.ci];
+const datos = () => ctrl().datos;
+function optsDe(i) {
+  const o = { T: TAB };
+  if (st.p && i > 0) {
+    const pd = st.p.controles[i - 1].datos, pr = Calc.calcular(pd, { T: TAB });
+    o.prev = { feval: pd.feval, peso: pd.peso, talla: pd.talla, pcef: pd.pcef };
+    if (pr.Ciclo === "NNA" && typeof pr.Z_Ref === "number") o.zPrevAuto = pr.Z_Ref;
+  }
+  return o;
+}
+const calcDe = (i) => Calc.calcular(st.p.controles[i].datos, optsDe(i));
+const calc = () => calcDe(st.ci);
+function historial() {
+  const h = [];
+  for (let i = 0; i <= st.ci; i++) h.push({ fecha: fechaCL(st.p.controles[i].datos.feval), actual: i === st.ci, R: calcDe(i) });
+  return h;
+}
+
+// ---------- condiciones de visibilidad (MAPEO §10 y reglas del proyecto) ----------
+const condSec = {
+  todos: () => true,
+  AD_AM: (R) => R.Ciclo === "AD" || R.Ciclo === "AM",
+  AM: (R) => R.Ciclo === "AM",
+  NNA: (R) => R.Ciclo === "NNA",
+  NNA_mayor1: (R) => R.Ciclo === "NNA",
+  NNA_10: (R) => R.Ciclo === "NNA" && R.Edad_Anios !== "" && R.Edad_Anios >= 10,
+  embarazada: (R) => R.Embarazada,
+  AD_AM_o_emb: (R) => R.Ciclo === "AD" || R.Ciclo === "AM" || R.Embarazada,
+  mujer_fertil: (R) => R.Sexo === "Femenino" && (R.Ciclo === "AD" || (R.Ciclo === "NNA" && R.Edad_Anios !== "" && R.Edad_Anios >= 10)),
+  lactante: (R) => R.GrupoEtario === "Lactante menor" || R.GrupoEtario === "Lactante mayor",
+  NNA_mayor2: (R) => ["Preescolar", "Escolar", "Adolescente"].includes(R.GrupoEtario),
+  escolar_adol: (R) => R.GrupoEtario === "Escolar" || R.GrupoEtario === "Adolescente",
+  adolescente: (R) => R.GrupoEtario === "Adolescente",
+  pc_activa: (R) => !!(R.PC && R.PC.activa),
+  no_lactante: (R) => !esLactante(R),
+};
+const esLactante = (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 24;
+// En una gestante adolescente no se muestran las preguntas pensadas para el niño (perinatales, cuidado, Tanner, lactancia)
+const OCULTAR_EMB = new Set(["NNA", "NNA_mayor1", "NNA_mayor2", "escolar_adol", "lactante", "mujer_fertil"]);
+// Preguntas esenciales: las de las planillas (alimentan cálculos, alertas o el DNI) y las del portafolio que también entran en un cálculo o alerta.
+// El resto del portafolio queda plegado en «Más preguntas».
+const ESENCIALES_P = new Set(["px_farm_si", "px_farm_lista", "px_supl_si", "px_supl_lista", "px_mor1", "px_mor2", "px_mor3", "px_mor4", "px_cig", "px_cig_unidad",
+  "px_tca1", "px_tca2", "px_tca3", "px_tca4", "px_tca5", "px_tca6", "px_tca7", "px_tca8", "px_tca9", "px_af_veces", "px_af_min", "px_viv_falta", "px_ntrab",
+  "px_estab", "px_curso", "px_jornada", "px_g", "px_p", "px_a", "px_multiple", "px_vacunas", "px_vacunas_motivo", "px_tanner"]);
+const modoDe = (p) => (p && p.modo === "flash" ? "flash" : "completa");
+const esEsencial = (k) => { const f = CAMPOS[k]; return !f || !f.portafolio || ESENCIALES_P.has(k); };
+const condCampo = {
+  ant_erc_etapa: (R, D) => D.ant_erc === "Sí",
+  alim_lact: (R) => R.Edad_Meses === "" || R.Edad_Meses < 12,
+  so_estres_txt: (R, D) => D.so_estres === "Sí",
+  so_red_txt: (R, D) => D.so_red === "Sí",
+  px_chupete: (R) => R.GrupoEtario === "Preescolar",
+  px_dieta: (R) => R.GrupoEtario === "Escolar" || R.GrupoEtario === "Adolescente",
+  px_cig: (R, D) => D.tabaco === "Sí", px_cig_anios: (R, D) => D.tabaco === "Sí", px_cig_dejar: (R, D) => D.tabaco === "Sí",
+  px_fondo_ojo: (R, D) => D.ant_dm2 === "Sí", px_podologia: (R, D) => D.ant_dm2 === "Sí", px_heridas: (R, D) => D.ant_dm2 === "Sí",
+  px_empam: (R) => R.Ciclo === "AM", px_empam_res: (R, D) => R.Ciclo === "AM",
+  px_menopausia: (R) => R.Sexo === "Femenino", px_tragar: (R) => R.Ciclo === "AD",
+  px_cig_unidad: (R, D) => D.tabaco === "Sí",
+  so_emb: (R) => R.Sexo === "Femenino" && (R.Edad_Anios === "" || (R.Edad_Anios >= 10 && R.Ciclo !== "AM")),
+  px_farm_lista: (R, D) => D.px_farm_si === "Sí", px_molestias: (R, D) => D.px_farm_si === "Sí",
+  px_mor1: (R, D) => D.px_farm_si === "Sí", px_mor2: (R, D) => D.px_farm_si === "Sí", px_mor3: (R, D) => D.px_farm_si === "Sí", px_mor4: (R, D) => D.px_farm_si === "Sí",
+  px_supl_lista: (R, D) => D.px_supl_si === "Sí",
+  ges_deriv: (R) => !!(R.Embarazada || R.Nodriza),
+  px_viv_falta: (R, D) => String(D.so_vivienda || "").startsWith("Falta"),
+  pc_gmfcs: (R, D) => D.pc_base === "Sí", pc_via: (R, D) => D.pc_base === "Sí" && D.pc_gmfcs === "V", pc_tono: (R, D) => D.pc_base === "Sí",
+  pcef: (R) => R.Ciclo === "" || (R.Ciclo === "NNA" && !(typeof R.Edad_Meses_Aprox === "number" && R.Edad_Meses_Aprox > 36)),
+  pantorrilla: (R) => R.Ciclo === "AM", alt_rodilla: (R) => R.Ciclo === "AM", usar_talla_rodilla: (R) => R.Ciclo === "AM",
+  ascitis: (R) => R.Ciclo === "AD" || R.Ciclo === "AM", edema: (R) => R.Ciclo === "AD" || R.Ciclo === "AM",
+  peso_hab: (R) => R.Ciclo !== "NNA", tiempo_cambio: (R) => R.Ciclo !== "NNA",
+  cc: (R) => R.Ciclo !== "NNA" || (typeof R.Edad_Anios === "number" && R.Edad_Anios >= 5),
+  px_vacunas_motivo: (R, D) => D.px_vacunas === "No", px_hosp_det: (R, D) => D.px_hosp === "Sí", px_probio_cual: (R, D) => D.px_probio === "Sí", px_rx_det: (R, D) => D.px_rx_pelvis === "Alterada",
+  px_curso: (R, D) => !!D.px_estab && D.px_estab !== "No asiste", px_jornada: (R, D) => !!D.px_estab && D.px_estab !== "No asiste",
+  so_colegio: (R, D) => !vacio(D.so_colegio) && vacio(D.px_estab),
+};
+// En lactantes no se muestran antecedentes ni hábitos de adulto
+for (const k of ["ant_dm2", "ant_hta", "ant_dlp", "ant_ecv", "ant_htaref", "ant_trathta", "ant_tratlip", "actividad"]) condCampo[k] = (R) => !esLactante(R);
+// Etapa 3: ajustes que solo aplican en adulto / adulto mayor o en parálisis cerebral
+for (const k of ["req_kcalkg", "req_factor_pat"]) condCampo[k] = (R) => R.Ciclo === "AD" || R.Ciclo === "AM";
+condCampo.req_factor = (R) => R.Ciclo === "AD" || R.Ciclo === "AM" || (R.Ciclo === "NNA" && R.Edad_Anios !== "" && R.Edad_Anios >= 1);
+condCampo.req_pc_meta_meses = (R) => !!(R.PC && R.PC.activa);
+const auditVisible = (R, D) => D.alcohol === "Sí" && !(R.Edad_Anios !== "" && R.Edad_Anios < 15);
+for (let i = 1; i <= 10; i++) condCampo["audit_" + String(i).padStart(2, "0")] = auditVisible;
+const condCalc = {
+  morisky: (R, D) => D.px_farm_si === "Sí",
+  tabaco: (R, D) => D.tabaco === "Sí",
+  audit: (R, D) => D.alcohol === "Sí",
+  pc: (R, D) => D.pc_base === "Sí",
+};
+
+// ---------- módulos ----------
+const MODS = {
+  general: [
+    { g: "Anamnesis" },
+    { id: "datos", t: "Datos del paciente" }, { id: "social", t: "Anamnesis social" }, { id: "clinica", t: "Anamnesis clínica" }, { id: "lact", t: "Clínica de lactancia", nod: 1 },
+    { g: "Evaluación" },
+    { id: "antropo", t: "Evaluación antropométrica" }, { id: "prematuro", t: "Prematuro", prem: 1 }, { id: "composicion", t: "Composición corporal" }, { id: "funcam", t: "Funcionalidad AM", am: 1 },
+    { id: "lab", t: "Laboratorio" }, { id: "pa", t: "Presión arterial" }, { id: "rcv", t: "Riesgo cardiovascular" },
+    { g: "Requerimientos" },
+    { id: "req", t: "Energía, macros, micronutrientes e hidratación" },
+    { g: "Anamnesis alimentaria" },
+    { id: "r24", t: "Recordatorio de 24 horas" }, { id: "r24d", t: "R24 detallado y tendencia de consumo" },
+    { g: "Cierre" },
+    { id: "dni", t: "DNI" }, { id: "pd", t: "Prescripción dietética" }, { id: "obj", t: "Objetivos nutricionales" }, { id: "seg", t: "Seguimiento y derivaciones" }, { id: "resumen", t: "Resumen" },
+  ],
+  gestante: [
+    { g: "Anamnesis" },
+    { id: "datos", t: "Datos del paciente" }, { id: "social", t: "Anamnesis social" }, { id: "clinica", t: "Anamnesis clínica" },
+    { g: "Evaluación" },
+    { id: "antropo", t: "Medidas antropométricas" }, { id: "gest", t: "Evaluación gestacional" }, { id: "composicion", t: "Composición corporal" },
+    { id: "lab", t: "Laboratorio" }, { id: "pa", t: "Presión arterial" },
+    { g: "Requerimientos" },
+    { id: "req", t: "Energía, macros, micronutrientes e hidratación" },
+    { g: "Anamnesis alimentaria" },
+    { id: "r24", t: "Recordatorio de 24 horas" }, { id: "r24d", t: "R24 detallado y tendencia de consumo" },
+    { g: "Cierre" },
+    { id: "dni", t: "DNI" }, { id: "pd", t: "Prescripción dietética" }, { id: "obj", t: "Objetivos nutricionales" }, { id: "seg", t: "Seguimiento y derivaciones" }, { id: "resumen", t: "Resumen" },
+  ],
+};
+const navDe = (R) => MODS[R.Embarazada ? "gestante" : "general"];
+
+// ---------- vistas ----------
+function ruta() { const h = (location.hash || "").slice(1); if (h === "pruebas") return vistaPruebas(); if (h === "ficha" && st.p) return vistaFicha(); vistaInicio(); }
+window.addEventListener("hashchange", ruta);
+function ir(h) { if (location.hash === "#" + h) ruta(); else location.hash = h; }
+
+function resumenPaciente(p) {
+  const c = p.controles[p.controles.length - 1];
+  const R = Calc.calcular(c.datos);
+  const edad = R.Edad_Texto || "—";
+  const etapa = (R.GrupoEtario || "—") + (R.Embarazada && R.SG !== "" ? ` · ${R.SG} SG` : "");
+  return { edad, etapa, fecha: fechaCL(c.datos.feval), emb: R.Embarazada };
+}
+function vistaInicio() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  st.p = null;
+  const filas = st.pacientes.slice().sort((a, b) => (b.actualizado || "").localeCompare(a.actualizado || "")).map((p) => {
+    const r = resumenPaciente(p);
+    if (st.confirmar === p.id) return `<tr><td colspan="6">¿Eliminar a <b>${esc(p.nombre || "Sin nombre")}</b> y todos sus controles? Esta acción no se puede deshacer.
+      <span class="acciones" style="display:inline-flex;margin-left:8px"><button class="btn peq peligro" data-a="borrar-ok" data-id="${p.id}">Eliminar</button><button class="btn peq" data-a="borrar-no">Cancelar</button></span></td></tr>`;
+    return `<tr class="fila"><td><button class="link" data-a="abrir" data-id="${p.id}">${esc(p.nombre || "Sin nombre")}</button>${p.caso ? ' <span class="chip">caso de prueba</span>' : ""}${modoDe(p) === "flash" ? ' <span class="chip">flash</span>' : ""}</td>
+      <td>${esc(r.etapa)}${r.emb ? ' <span class="chip acc">Gestante</span>' : ""}</td><td class="num">${esc(r.edad)}</td>
+      <td class="num">${r.fecha} <span class="chip">${p.controles.length} control${p.controles.length === 1 ? "" : "es"}</span></td>
+      <td style="text-align:right"><button class="btn peq peligro" data-a="borrar" data-id="${p.id}">Eliminar</button></td></tr>`;
+  }).join("");
+  const opCasos = `<optgroup label="Consulta completa (planilla)">${CASOS.nombres.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join("")}</optgroup><optgroup label="Consulta flash">${CFLASH.map((c, i) => `<option value="f${i}">${esc(c.titulo.replace(/^Flash · /, ""))}</option>`).join("")}</optgroup>`;
+  $app.innerHTML = `
+    <div class="inicio-h">
+      <div><h1>Mis pacientes</h1><p>${esc(textoModo())}. Cada estudiante ve solo su propia lista.</p></div>
+      <div class="acciones">
+        <span class="nuevo-grupo"><button class="btn pri" data-a="nuevo" data-modo="flash" title="Solo preguntas esenciales">Nueva consulta flash</button>
+        <button class="btn" data-a="nuevo" data-modo="completa" title="Todas las preguntas del portafolio">Nueva consulta completa</button></span>
+        <span class="cargar-caso"><label for="selCaso" class="tag" style="font-size:13px;color:var(--muted)">Caso de prueba</label>
+          <select id="selCaso">${opCasos}</select><button class="btn" data-a="caso">Cargar</button></span>
+        <label class="btn" for="impJSON">Importar JSON</label><input type="file" id="impJSON" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <div class="recordatorio" role="note"><div><b>Recordatorio para el box:</b> ${esc(ESQ.recordatorio.replace(/^Antes de ir al box, l/, "L"))}</div></div>
+    <div class="caja">${filas ? `<div class="tabla-w"><table class="pac"><thead><tr><th>Paciente</th><th>Grupo etario</th><th>Edad</th><th>Último control</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`
+      : `<div class="vacio"><h2>Aún no hay pacientes</h2>Cree un paciente nuevo (para una gestante, marque sexo femenino y «¿Está embarazada actualmente?») o cargue uno de los 3 casos de prueba de la planilla (escolar con obesidad, adulta con DM2 y dislipidemia, adulto mayor con bajo peso) para ver la app funcionando.</div>`}</div>
+    <p class="nota-pie">Consulta flash completa: de la anamnesis al resumen imprimible (etapas 1 a 6 de 9). Los demás módulos aparecen en la navegación y se activan en las próximas etapas.</p>`;
+  $estado.textContent = textoModo();
+}
+
+function crearPaciente(datosIni, caso, modo) {
+  const d = Object.assign({}, datosIni || {});
+  if (!d.feval) d.feval = hoy();
+  const p = { id: nuevoId(), modo: modo === "flash" ? "flash" : "completa", caso: caso || null, creado: new Date().toISOString(), controles: [{ id: "c1", datos: d }] };
+  sincronizarMeta(p); return p;
+}
+function migrar(p) {
+  if (p.tipo === "gestante") { for (const c of p.controles) { c.datos.sexo = "Femenino"; c.datos.so_emb = "Sí"; } }
+  delete p.tipo;
+  for (const c of p.controles) {
+    const d = c.datos;
+    if (!vacio(d.farmacos) && d.px_farm_si === undefined) { d.px_farm_si = "Sí"; d.px_farm_lista = [{ nombre: String(d.farmacos), dosis: "", funcion: "", fm: false }]; delete d.farmacos; }
+    if (!vacio(d.so_supl) && d.px_supl_si === undefined) { d.px_supl_si = "Sí"; d.px_supl_lista = [{ nombre: String(d.so_supl), dosis: "", funcion: "" }]; delete d.so_supl; }
+  }
+}
+async function abrir(p, mod) { migrar(p); st.p = p; st.ci = p.controles.length - 1; st.mod = mod || "datos"; st.verFuente = null; ir("ficha"); }
+
+// Módulos que el paciente puede abrir, en el orden del menú (los mismos filtros que navHTML)
+function modsVisibles(R) {
+  return navDe(R).filter((m) => m.id && !(m.nod && !R.Nodriza) && !(m.am && R.Ciclo && R.Ciclo !== "AM") && !(m.nna && R.Ciclo && R.Ciclo !== "NNA") && !(m.prem && !(R.Ciclo === "NNA" && R.PR && R.PR.Es === "Sí")));
+}
+// Botones «Anterior» y «Siguiente» al final de cada página
+function pagerHTML(R) {
+  const vis = modsVisibles(R), i = vis.findIndex((m) => m.id === st.mod);
+  if (i < 0) return "";
+  const ant = vis[i - 1], sig = vis[i + 1];
+  let prox = "";
+  if (!sig) { const todos = navDe(R), j = todos.findIndex((m) => m.id === st.mod); const pend = todos.slice(j + 1).find((m) => !m.g && !m.id && !(m.am && R.Ciclo && R.Ciclo !== "AM")); if (pend) prox = `Lo siguiente (${esc(pend.t)}) se activa en la etapa ${pend.e}.`; }
+  return `<div class="pager">${ant ? `<button class="btn" data-mod="${ant.id}">← ${esc(ant.t)}</button>` : "<span></span>"}
+    ${sig ? `<button class="btn pri" data-mod="${sig.id}">Siguiente: ${esc(sig.t)} →</button>` : `<span class="sec-nota">${prox || "Fin de la consulta."}</span>`}</div>`;
+}
+function navHTML(R) {
+  return navDe(R).map((m) => {
+    if (m.g) return `<div class="grupo">${esc(m.g)}</div>`;
+    if (m.am && R.Ciclo && R.Ciclo !== "AM") return "";
+    if (m.nod && !R.Nodriza) { if (st.mod === m.id) st.mod = "datos"; return ""; }
+    if (m.nna && R.Ciclo && R.Ciclo !== "NNA") return "";
+    if (m.prem && !(R.Ciclo === "NNA" && R.PR && R.PR.Es === "Sí")) { if (st.mod === m.id) st.mod = "datos"; return ""; }
+    if (!m.id) return `<button disabled title="Disponible en la etapa ${m.e}">${esc(m.t)} <small>Etapa ${m.e}</small></button>`;
+    return `<button data-mod="${m.id}" ${st.mod === m.id ? 'aria-current="page"' : ""}>${esc(m.t)}</button>`;
+  }).join("");
+}
+const opsCtrlHTML = () => st.p.controles.map((c, i) => `<option value="${i}" ${i === st.ci ? "selected" : ""}>Control ${i + 1} · ${fechaCL(c.datos.feval)}</option>`).join("");
+// Actualiza menú, etiqueta de gestante y lista de controles sin redibujar el formulario (no interrumpe lo que se está escribiendo)
+function refrescarNav() {
+  const R = calc(), modAntes = st.mod;
+  const $n = document.querySelector("nav.mods"); if ($n) $n.innerHTML = navHTML(R);
+  const $g = document.getElementById("chipGest"); if ($g) $g.hidden = !R.Embarazada;
+  const $c = document.getElementById("selCtrl"); if ($c) $c.innerHTML = opsCtrlHTML();
+  if (st.mod !== modAntes) renderModulo();
+  else { const $pg = document.getElementById("pager"); if ($pg) $pg.innerHTML = pagerHTML(R); }
+}
+function vistaFicha() {
+  const p = st.p, R = calc();
+  const opsCtrl = opsCtrlHTML();
+  const nav = navHTML(R);
+  $app.innerHTML = `
+    <div class="ficha-h">
+      <button class="btn peq" data-a="volver">← Pacientes</button>
+      <h1 id="tituloPac">${esc(datos().nombre || "Sin nombre")}</h1>
+      <span class="chip acc" id="chipGest" ${R.Embarazada ? "" : "hidden"}>Gestante</span>
+      ${p.caso ? '<span class="chip">caso de prueba</span>' : ""}
+      <div class="top-esp"></div>
+      <span class="ctrl"><label for="selCtrl">Control</label><select id="selCtrl">${opsCtrl}</select></span>
+      <span class="seg modo-seg" role="radiogroup" aria-label="Tipo de consulta"><label><input type="radio" name="modoCons" data-a="modo" data-modo="flash" ${modoDe(p) === "flash" ? "checked" : ""}>Flash</label><label><input type="radio" name="modoCons" data-a="modo" data-modo="completa" ${modoDe(p) === "completa" ? "checked" : ""}>Completa</label></span>
+      <button class="btn peq" data-a="nuevo-control">Nuevo control</button>
+      <button class="btn peq" data-a="exportar">Exportar JSON</button>
+    </div>
+    <div class="reloj" id="reloj" aria-label="Cronómetro de la consulta"></div>
+    <div class="grid">
+      <nav class="mods" aria-label="Módulos">${nav}</nav>
+      <main class="modulo" id="modulo"></main>
+      <aside class="panel" id="panel" aria-label="Resultados clave"></aside>
+    </div>`;
+  renderModulo(); actualizar(); renderReloj();
+}
+// ---------- cronómetro de la consulta (pauta sugerida de 45 minutos) ----------
+const PAUTA = [["Anamnesis", 15], ["Antropometría", 10], ["Anamnesis alimentaria", 15], ["Cierre (DNI, PD, educación)", 5]];
+const relojDe = () => { const c = ctrl(); if (!c.reloj) c.reloj = { inicio: null, acum: 0 }; return c.reloj; };
+const transcurrido = () => { const r = relojDe(); return r.acum + (r.inicio ? Date.now() - r.inicio : 0); };
+const mmss = (ms) => { const t = Math.floor(ms / 1000); return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); };
+function renderReloj() {
+  const $r = document.getElementById("reloj"); if (!$r || !st.p) return;
+  const r = relojDe(), ms = transcurrido(), min = ms / 60000, total = 45;
+  let acc = 0, actual = PAUTA.length - 1;
+  for (let i = 0; i < PAUTA.length; i++) { if (min < acc + PAUTA[i][1]) { actual = i; break; } acc += PAUTA[i][1]; }
+  const pasado = min > total;
+  $r.innerHTML = `<div class="reloj-izq"><span class="reloj-t num ${pasado ? "pasado" : ""}" data-reloj-t>${mmss(ms)}</span>
+      <button class="btn peq" data-a="reloj-play">${r.inicio ? "Pausar" : ms ? "Continuar" : "Iniciar consulta"}</button>
+      ${ms && !r.inicio ? `<button class="btn peq" data-a="reloj-reset">${st.ui.confirmReloj ? "¿Reiniciar a 00:00?" : "Reiniciar"}</button>` : ""}</div>
+    <div class="reloj-barra" title="Pauta sugerida de 45 minutos">${PAUTA.map(([n, m], i) => `<div class="seg-r ${ms && i === actual && !pasado ? "act" : ""} ${min >= PAUTA.slice(0, i + 1).reduce((a, x) => a + x[1], 0) ? "hecho" : ""}" style="flex:${m}"><span>${esc(n)} · ${m}'</span></div>`).join("")}
+      <div class="reloj-marca" style="left:${Math.min(100, min / total * 100)}%" ${ms ? "" : "hidden"}></div></div>
+    <span class="reloj-nota">${pasado ? `<b class="pasado">+${mmss(ms - total * 60000)} sobre los 45 min</b>` : "Pauta sugerida"}</span>`;
+}
+setInterval(() => { if (st.p && relojDe().inicio && document.getElementById("reloj")) {
+  const ms = transcurrido(), t = document.querySelector("[data-reloj-t]"); if (t) t.textContent = mmss(ms);
+  if (Math.floor(ms / 1000) % 15 === 0) renderReloj(); } }, 1000);
+
+// ---------- render de campos ----------
+function etiqueta(k, R) { const f = CAMPOS[k]; return R && R.Ciclo === "NNA" && !R.Embarazada && f.labelNNA ? f.labelNNA : f.label; }
+// Fórmulas de energía y métodos de hidratación: solo los que aplican al grupo etario del paciente (columna «¿Aplica?» de la planilla)
+function opsReq(k) {
+  const R = calc(), lista = k === "req_formula" ? (R.EN && R.EN.formulas) : R.HID;
+  const nombre = (x) => x.nombre || x.n;
+  let ops = (lista || []).filter((x) => x.aplica === "Sí").map(nombre);
+  if (!ops.length) { // sin peso todavía: se filtra por grupo etario
+    const nna = R.Ciclo === "NNA", lact = nna && R.Edad_Meses_Aprox !== "" && R.Edad_Meses_Aprox < 12, pc = !!(R.PC && R.PC.activa);
+    const F = LISTAS.Lista_Formulas, H = LISTAS.Lista_Hid;
+    if (k === "req_formula") ops = !R.Ciclo ? [] : lact ? F.slice(0, 2) : nna ? F.slice(2, 7).concat(pc ? F.slice(7, 10) : []) : F.slice(10, 12);
+    else ops = !R.Ciclo ? [] : nna ? H.slice(0, 4).filter((x, i) => !(i === 3 && lact)).concat([H[5]]) : H.slice(4, 6);
+  }
+  const v = datos()[k]; if (v && !ops.includes(v)) ops.push(v); // conserva una elección previa que ya no aplica (se usa la sugerida)
+  return ops;
+}
+function opciones(f) { return f.list ? LISTAS[f.list] || [] : f.options || []; }
+function campoHTML(k) {
+  const f = CAMPOS[k], D = datos(), v = D[k], id = "f_" + k;
+  if (!f) return "";
+  const lbl = `<label for="${id}" data-lbl="${k}">${esc(f.label)}</label>`;
+  let ctl = "", ancho = false;
+  if (f.type === "list" || f.type === "options") {
+    const ops = k === "actividad" && D.pc_base === "Sí" ? LISTAS.Lista_ActividadPC : (k === "req_formula" || k === "hid_metodo") ? opsReq(k) : f.dyn ? ((ESQ.opciones_din[f.dyn] || {})[D.px_estab] || []) : opciones(f);
+    if (ops.length === 2 && f.list === "Lista_SiNo") {
+      return `<div class="campo" data-campo="${k}"><span class="lbl" id="l_${k}" data-lbl="${k}">${esc(f.label)}</span>
+        <div class="seg" role="radiogroup" aria-labelledby="l_${k}">${ops.map((o, i) => `<label><input type="radio" name="${id}" id="${id}_${i}" data-k="${k}" value="${esc(o)}" ${v === o ? "checked" : ""}>${esc(o)}</label>`).join("")}</div></div>`;
+    }
+    ctl = `<select id="${id}" data-k="${k}"><option value="">—</option>${ops.map((o) => `<option ${String(v) === String(o) ? "selected" : ""} value="${esc(o)}">${esc(String(o).replace(" (detallar en la nota)", ""))}</option>`).join("")}</select>`;
+  } else if (f.type === "number" && k === "peso" && esLactante(calc())) {
+    // Lactantes: el peso se ingresa en gramos y se guarda en kg
+    return `<div class="campo" data-campo="${k}"><label for="${id}">Peso actual (g)</label><input type="number" inputmode="numeric" id="${id}" data-k="${k}" data-gramos min="300" max="30000" step="1" value="${vacio(v) ? "" : esc(Math.round(v * 1000))}"><span class="err" hidden></span><span class="ayuda">Lactantes: en gramos (por ejemplo, 3450). Se guarda como ${vacio(v) ? "kg" : esc(String(v).replace(".", ",")) + " kg"}.</span></div>`;
+  } else if (f.type === "number") {
+    ctl = `<input type="number" inputmode="decimal" id="${id}" data-k="${k}" min="${f.min}" max="${f.max}" step="any" value="${vacio(v) ? "" : esc(v)}"><span class="err" hidden></span>`;
+  } else if (f.type === "date") {
+    ctl = `<input type="date" id="${id}" data-k="${k}" value="${esc(v || "")}">`;
+  } else if (f.type === "multi") {
+    const sel = Array.isArray(v) ? v : [];
+    ancho = true;
+    return `<div class="campo ancho" data-campo="${k}"><span class="lbl">${esc(f.label)}</span><div class="checks">${f.options.map((o, i) => `<label><input type="checkbox" id="${id}_${i}" data-k="${k}" data-multi value="${esc(o)}" ${sel.includes(o) ? "checked" : ""}>${esc(o)}</label>`).join("")}</div></div>`;
+  } else if (f.type === "tanner") {
+    return tannerHTML(k);
+  } else if (f.type === "scored") {
+    ctl = `<select id="${id}" data-k="${k}" data-scored><option value="">—</option>${f.scored.map(([t, n]) => `<option value="${n}" ${!vacio(v) && Number(v) === n ? "selected" : ""}>${esc(t)} (${n})</option>`).join("")}</select>`;
+  } else if (f.type === "textarea") {
+    ancho = true; ctl = `<textarea id="${id}" data-k="${k}" rows="${k === "dni_manual" ? 4 : 2}">${esc(v || "")}</textarea>`;
+  } else if (f.type === "medlist") {
+    return `<div class="campo ancho" data-campo="${k}"><span class="lbl">${esc(f.label)}</span>${medsHTML(k)}</div>`;
+  } else {
+    ctl = `<input type="text" id="${id}" data-k="${k}" value="${esc(v || "")}" autocomplete="off">`;
+    if (/patolog|fármaco|motivo|síntoma|complicac|factores/i.test(f.label)) ancho = true;
+  }
+  let extra = "";
+  if (f.ayuda_txt) extra += `<span class="ayuda">${esc(f.ayuda_txt)}</span>`;
+  if (f.ayuda === "def_actividad" && D.pc_base !== "Sí") { ancho = true; extra += actividadHTML(); }
+  if (f.ayuda === "def_actividad" && D.pc_base === "Sí") extra += `<span class="ayuda">Parálisis cerebral (Krick): si queda vacío se asigna según GMFCS. Ver el bloque «Parálisis cerebral».</span>`;
+  return `<div class="campo${ancho ? " ancho" : ""}" data-campo="${k}">${lbl}${ctl}${extra}</div>`;
+}
+function actividadHTML() {
+  const A = ESQ.actividad_def;
+  return `<div class="niveles" data-out="niveles">${A.niveles.map((n) => `<div class="nivel" data-nivel="${esc(n.v)}"><b>${esc(n.v)}</b><div class="meta">${esc(n.fao)} · ${esc(n.pal)}</div>${esc(n.txt)}</div>`).join("")}</div>
+    <span class="ayuda">${esc(A.fuente)} <button class="verif" type="button" data-a="verif-act">⚠ verificar</button></span>
+    <span class="ayuda" data-out="verif-act" hidden>${esc(A.verificar)}</span>`;
+}
+const DIC = (cat) => (cat === "suplementos" ? MED.suplementos : MED.farmacos);
+function medsHTML(k) {
+  const f = CAMPOS[k], filas = Array.isArray(datos()[k]) ? datos()[k] : [];
+  const lista = `dl_${f.cat}`;
+  return `<div class="meds">${filas.map((r, i) => {
+      const hit = Calc.buscarFuncion(r.nombre, DIC(f.cat));
+      return `<div class="med">
+        <div class="combo"><input type="text" id="m_${k}_${i}_n" data-med="${k}" data-i="${i}" data-f="nombre" value="${esc(r.nombre || "")}" placeholder="Escriba o elija de la lista" aria-label="Nombre" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"><button type="button" class="combo-btn" data-a="combo-abrir" data-for="m_${k}_${i}_n" aria-label="Ver la lista completa" tabindex="-1">▾</button></div>
+        <div><input type="text" id="m_${k}_${i}_d" data-med="${k}" data-i="${i}" data-f="dosis" value="${esc(r.dosis || "")}" placeholder="Dosis y horario" aria-label="Dosis y horario" autocomplete="off"></div>
+        <div><input type="text" id="m_${k}_${i}_f" data-med="${k}" data-i="${i}" data-f="funcion" class="${r.fm ? "" : hit ? "func-auto" : ""}" value="${esc(r.funcion || "")}" placeholder="${r.nombre ? "No está en la lista: escriba la función" : "Función (aparece sola)"}" aria-label="Función"><small data-medsrc="${k}_${i}">${r.fm ? "Función escrita a mano" : hit ? "Función automática ⚠ verificar" : ""}</small></div>
+        <button class="btn peq peligro" type="button" data-a="med-quitar" data-k="${k}" data-i="${i}" aria-label="Quitar">Quitar</button></div>`;
+    }).join("")}
+    <div class="acciones"><button class="btn peq" type="button" data-a="med-agregar" data-k="${k}">+ Agregar ${f.cat === "suplementos" ? "suplemento" : "fármaco"}</button>
+      <span class="ayuda">${esc(MED.verificar)}</span></div></div>`;
+}
+function tannerHTML(k) {
+  const T = ESQ.tanner, v = datos()[k] || "";
+  const R = calc();
+  const sexos = R.SexoC ? [R.SexoC] : ["F", "M"];
+  const img = { F: ["tanner_mujer.png", "Desarrollo mamario en la mujer"], M: ["tanner_hombre.png", "Desarrollo genital en el hombre"] };
+  return `<div class="campo ancho" data-campo="${k}"><span class="lbl" id="l_${k}">${esc(CAMPOS[k].label)}</span>
+    <div class="tanner">
+      <div class="seg" role="radiogroup" aria-labelledby="l_${k}">${["1", "2", "3", "4", "5"].map((g) => `<label><input type="radio" name="f_${k}" id="f_${k}_${g}" data-k="${k}" value="${g}" ${v === g ? "checked" : ""}>Grado ${g}</label>`).join("")}</div>
+      <div class="desc" data-out="tanner-desc"></div>
+      <div class="tanner-figs">${sexos.map((s) => `<figure><img src="data/${img[s][0]}" alt="${img[s][1]} según estadios de Tanner, grados 1 a 5" loading="lazy"><figcaption>${img[s][1]} (Anexo 1, portafolio INSC 1.ª entrega, p. 37)</figcaption></figure>`).join("")}</div>
+    </div></div>`;
+}
+
+function renderModulo() {
+  const p = st.p, mod = st.mod, R = calc();
+  const secs = ESQ.secciones.general[mod] || [];
+  const titulo = navDe(R).find((m) => m.id === mod).t;
+  const fkey = mod;
+  let h = `<div class="mod-h"><h2>${esc(titulo)}</h2><button class="info" data-a="fuente" aria-expanded="${st.verFuente === mod}" aria-label="Fuente del módulo" title="Fuente">i</button>
+    </div>
+    <div class="fuente" ${st.verFuente === mod ? "" : "hidden"}>Fuente: ${esc(ESQ.fuentes[fkey])}</div>`;
+  if (mod !== "datos") h += `<p class="sec-nota" data-out="sin-edad" style="padding:0 0 10px" hidden>Ingrese la fecha de nacimiento y la de evaluación en «Datos del paciente» para ver las preguntas que corresponden al ciclo vital.</p>`;
+  const flash = modoDe(p) === "flash";
+  let ocultas = 0; const soloComp = [];
+  secs.forEach((s, i) => {
+    // Consulta flash: solo preguntas esenciales; se omiten las secciones que quedan sin preguntas ni resultados
+    const ess = (s.c || []).filter(esEsencial), opc = (s.c || []).filter((k) => !esEsencial(k));
+    if (flash && s.soloCompleta) { ocultas += (s.c || []).length; soloComp.push(s.t); return; }
+    if (flash) { ocultas += opc.length; if (/\(opcional\)/.test(s.t)) { ocultas += ess.length; return; } if (!ess.length && !s.calc && !s.live && !s.tabla) return; }
+    h += `<section class="sec" data-sec="${i}" data-cuando="${s.cuando}"><h3>${esc(s.t)}</h3>${s.nota ? `<p class="sec-nota">${esc(s.nota)}</p>` : ""}`;
+    const ch = s.calc ? `<div data-calcw="${s.calc}">${calcHTML(s.calc)}</div>` : "";
+    const lv = s.live ? `<div data-live="${s.live}"></div>` : "";
+    if (s.calcPos !== "after") h += ch;
+    if (s.livePos === "before") h += lv;
+    const lista = flash ? ess : (s.c || []);
+    if (lista.length) h += `<div class="campos">${lista.map(campoHTML).join("")}</div>`;
+    if (s.calcPos === "after") h += ch;
+    if (s.tabla === "micro") h += microTablaHTML(flash);
+    if (s.tabla === "r24") h += r24TablaHTML(flash);
+    if (s.tabla === "lab") h += labTablaHTML(flash);
+    if (s.tabla === "pauta") h += pautaTablaHTML();
+    if (s.tabla === "r24d") h += r24dTablaHTML();
+    if (s.tabla === "tfc") h += tfcTablaHTML();
+    if (s.tabla === "dist") h += distTablaHTML();
+    if (s.tabla === "vac") h += vacTablaHTML();
+    if (s.tabla === "prev") h += prevTablaHTML();
+    if (s.livePos !== "before") h += lv;
+    if (s.aj) h += `<details class="ajustes" ${flash ? "" : "open"}><summary>Ajustar el cálculo <span>(opcional; vacío = valor sugerido de la planilla)</span></summary><div class="campos">${s.aj.map(campoHTML).join("")}</div></details>`;
+    h += `</section>`;
+  });
+  if (flash && ocultas && ["datos", "social", "clinica"].includes(mod)) h = h.replace('<div class="fuente"', `<p class="flash-nota">Consulta flash: se muestran solo las preguntas esenciales (${ocultas} opcionales ocultas). <button class="link" data-a="modo" data-modo="completa">Cambiar a consulta completa</button></p><div class="fuente"`);
+  if (soloComp.length) h += `<p class="flash-nota">Consulta flash: ${soloComp.length} evaluaciones quedan para la consulta completa (${esc(soloComp.join(", "))}). <button class="link" data-a="modo" data-modo="completa">Cambiar a consulta completa</button></p>`;
+  if (mod === "social") {
+    h += `<section class="sec"><h3>Alertas sociales <button class="verif" data-a="verif">⚠ verificar</button></h3>
+      <p class="sec-nota">Pasan a Seguimiento y derivaciones (etapa 6).</p>
+      <div class="verif-txt" data-out="verif-txt" hidden style="padding:0 16px">${esc(ESQ.verificar.alertas)}</div>
+      <div class="alertas-box" data-out="alertas"></div></section>`;
+  }
+  if (mod === "clinica") {
+    h += `<section class="sec" data-out="sec-tca-alerta" hidden><h3>Alerta de derivación</h3><div class="alertas-box" data-out="alerta-tca"></div></section>`;
+  }
+  document.getElementById("modulo").innerHTML = h + `<div id="pager">${pagerHTML(R)}</div>`;
+}
+// ---------- Laboratorio: tabla con valor editable y rango/interpretación en vivo ----------
+const LAB_GRUPOS = [["Hemograma y hierro", ["hb", "hto", "vcm", "hcm", "ferr", "fe"]], ["Metabolismo de la glucosa", ["glic", "ptgo", "hba1c", "insul"]], ["Perfil lipídico", ["ct", "hdl", "ldl", "tg"]],
+  ["Función renal", ["creat", "rac", "bun", "au"]], ["Proteínas", ["alb", "prealb", "prott"]], ["Tiroides, vitaminas y hepático", ["tsh", "t4l", "vitd", "b12", "got", "gpt"]]];
+const LAB_FLASH = new Set(["hb", "glic", "hba1c", "ct", "hdl", "ldl", "tg", "creat", "alb"]);
+function labTablaHTML(flash) {
+  const D = datos(), R = calc(), todos = !flash || st.ui.labTodos;
+  const fila = (k) => { const x = R.LAB.find((o) => o.k === k), kk = "lab_" + k, f = CAMPOS[kk], v = D[kk];
+    const ver = todos || LAB_FLASH.has(k) || !vacio(v);
+    return `<tr data-lab="${k}" ${ver ? "" : "hidden"}><td>${esc(x.n)}</td><td><span class="campo mini" data-campo="${kk}"><input type="number" inputmode="decimal" data-k="${kk}" min="${f.min}" max="${f.max}" step="any" value="${vacio(v) ? "" : esc(v)}" aria-label="${esc(x.n)}"><span class="err" hidden></span></span></td>
+      <td>${esc(x.u)}</td><td class="num" data-out="lab-rg-${k}"></td><td data-out="lab-cls-${k}"></td></tr>`; };
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res labt"><thead><tr><th>Examen</th><th>Valor</th><th>Unidad</th><th>Rango</th><th>Interpretación</th></tr></thead>
+    ${LAB_GRUPOS.map(([g, ks]) => `<tbody><tr class="grupo-f"><td colspan="5">${esc(g)}</td></tr>${ks.map(fila).join("")}</tbody>`).join("")}
+    ${R.Embarazada && R.LABG && R.LABG.length ? `<tbody><tr class="grupo-f"><td colspan="5">Gestante (Guía Perinatal 2015, Anexo 2)</td></tr>${R.LABG.map((x) => { const kk = "lab_" + x.k, v = D[kk], ver = todos || !vacio(v) || ["eritro", "leuco", "plaq"].includes(x.k);
+      return `<tr data-lab="${x.k}" ${ver ? "" : "hidden"}><td>${esc(x.n)}</td><td><span class="campo mini" data-campo="${kk}"><input type="number" inputmode="decimal" data-k="${kk}" min="0" max="1000000" step="any" value="${vacio(v) ? "" : esc(v)}" aria-label="${esc(x.n)}"><span class="err" hidden></span></span></td><td>${esc(x.u)}</td><td class="num" data-out="lab-rg-${x.k}"></td><td data-out="lab-cls-${x.k}"></td></tr>`; }).join("")}</tbody>` : ""}</table></div>
+    ${R.Embarazada ? `<p class="sec-nota">Gestante: rangos de la Guía Perinatal MINSAL 2015 (Anexo 2, p. 439-440, unidades corregidas). Los exámenes «sin cambios» (TSH, T4 libre, GOT, GPT, etc.) usan el rango de adulto. Fierro: referencia 90 µg/dL.</p>` : ""}
+    ${flash ? `<p class="sec-nota"><label class="chk-inline"><input type="checkbox" data-a="lab-todos" ${st.ui.labTodos ? "checked" : ""}> Ver todos los exámenes (consulta flash: los más frecuentes y los ya ingresados)</label></p>` : ""}`;
+}
+function labSalidas(R, out) {
+  const nf = (v) => (typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: 2 }) : "");
+  for (const x of R.LAB.concat(R.LABG || [])) {
+    const rg = x.min === "" && x.max === "" ? "—" : x.min === "" ? "≤ " + nf(x.max) : x.max === "" ? "≥ " + nf(x.min) : nf(x.min) + " – " + nf(x.max);
+    out("lab-rg-" + x.k, rg);
+    const e = Calc.estadoColor(x.cls, ESQ.colores);
+    out("lab-cls-" + x.k, x.cls === "Sin dato" ? '<span class="pend">—</span>' : e ? `<span class="estado ${e}">${esc(x.cls)}</span>` : esc(x.cls));
+  }
+}
+// impresión de la ficha resumen: se copia a un contenedor de primer nivel para que salga en una sola hoja carta
+function prepararImpresion() {
+  const h = document.getElementById("hojaResumen"); if (!h) return;
+  let host = document.getElementById("printHost"); if (!host) { host = document.createElement("div"); host.id = "printHost"; document.body.appendChild(host); }
+  host.innerHTML = h.outerHTML.replace('id="hojaResumen"', 'id="hojaPrint"'); document.body.classList.add("imprimiendo");
+}
+window.prepararImpresion = prepararImpresion;
+function terminarImpresion() { document.body.classList.remove("imprimiendo"); const host = document.getElementById("printHost"); if (host) host.innerHTML = ""; }
+// ---------- Cierre: pauta, distribución, vacunas y exámenes preventivos ----------
+const inNum = (k, v, min, max, w) => `<span class="campo mini" data-campo="${k}"><input type="number" inputmode="decimal" data-k="${k}" min="${min}" max="${max}" step="any" value="${vacio(v) ? "" : esc(v)}" style="width:${w || 64}px" aria-label="${esc(CAMPOS[k] ? CAMPOS[k].label : k)}"><span class="err" hidden></span></span>`;
+function pautaTablaHTML() {
+  const D = datos(), R = calc(), g = R.PD.grupos;
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res pauta"><thead><tr><th>Grupo</th><th>Sugerido</th><th>Manual</th><th>Usado</th><th>kcal</th><th>Prot (g)</th><th>Lip (g)</th><th>CHO (g)</th></tr></thead><tbody>
+    ${g.map((x, i) => `<tr><td data-out="pa-n-${i}">${esc(x.grupo)}</td><td class="num" data-out="pa-s-${i}"></td><td>${inNum("pd_por_" + i, D["pd_por_" + i], 0, 30, 58)}</td><td class="num" data-out="pa-u-${i}"></td><td class="num" data-out="pa-k-${i}"></td><td class="num" data-out="pa-p-${i}"></td><td class="num" data-out="pa-l-${i}"></td><td class="num" data-out="pa-c-${i}"></td></tr>`).join("")}</tbody>
+    <tfoot><tr class="total"><td colspan="4">Total pauta</td><td class="num" data-out="pa-tk"></td><td class="num" data-out="pa-tp"></td><td class="num" data-out="pa-tl"></td><td class="num" data-out="pa-tc"></td></tr>
+    <tr><td colspan="4">Requerimiento</td><td class="num" data-out="pa-rk"></td><td class="num" data-out="pa-rp"></td><td class="num" data-out="pa-rl"></td><td class="num" data-out="pa-rc"></td></tr>
+    <tr><td colspan="4">% de adecuación (90-110 %)</td><td data-out="pa-ak"></td><td data-out="pa-ap"></td><td data-out="pa-al"></td><td data-out="pa-ac"></td></tr></tfoot></table></div>`;
+}
+function distTablaHTML() {
+  const D = datos(), T6 = Calc.TIEMPOS;
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res dist"><thead><tr><th>Tiempo</th><th>% (ingreso)</th><th>% usado</th><th>kcal objetivo</th><th>kcal pauta</th><th>Diferencia</th></tr></thead><tbody>
+    ${T6.map((t, i) => `<tr><td>${esc(t)}</td><td>${inNum("pd_dist_" + i, D["pd_dist_" + i], 0, 100, 58)}</td><td class="num" data-out="di-u-${i}"></td><td class="num" data-out="di-o-${i}"></td><td class="num" data-out="di-p-${i}"></td><td class="num" data-out="di-d-${i}"></td></tr>`).join("")}</tbody>
+    <tfoot><tr class="total"><td colspan="2">Suma</td><td class="num" data-out="di-sum"></td><td colspan="3" data-out="di-ok"></td></tr></tfoot></table></div>
+    <h4 class="sub">Porciones por tiempo de comida</h4><div class="tabla-w" style="padding:6px 16px 6px"><table class="pr res"><thead><tr><th>Grupo</th>${T6.map((t) => `<th>${esc(t)}</th>`).join("")}<th>Suma</th></tr></thead><tbody>
+    ${Array.from({ length: 11 }, (_, i) => `<tr><td data-out="pt-n-${i}"></td>${T6.map((_, t) => `<td class="num" data-out="pt-${i}-${t}"></td>`).join("")}<td data-out="pt-ok-${i}"></td></tr>`).join("")}</tbody></table></div>`;
+}
+function vacTablaHTML() {
+  const D = datos();
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res"><thead><tr><th>Vacuna</th><th>¿Administrada?</th><th>Estado</th></tr></thead><tbody>
+    ${Array.from({ length: 22 }, (_, i) => { const k = "vac_" + pad2(i), v = D[k] || "";
+      return `<tr data-vac="${i}"><td>${esc(CAMPOS[k].label)}</td><td><select data-k="${k}" aria-label="${esc(CAMPOS[k].label)}"><option value="">—</option>${["Sí", "No"].map((o) => `<option ${v === o ? "selected" : ""}>${o}</option>`).join("")}</select></td><td data-out="vac-${i}"></td></tr>`; }).join("")}</tbody></table></div>`;
+}
+function prevTablaHTML() {
+  const D = datos();
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res"><thead><tr><th>Examen</th><th>Fecha del último</th><th>Estado</th><th>Vence</th></tr></thead><tbody>
+    ${Array.from({ length: 10 }, (_, i) => { const k = "prev_" + pad2(i);
+      return `<tr data-prev="${i}"><td>${esc(CAMPOS[k].label.replace(": fecha del último", ""))}</td><td><input type="date" data-k="${k}" value="${esc(D[k] || "")}" aria-label="${esc(CAMPOS[k].label)}"></td><td data-out="prev-e-${i}"></td><td data-out="prev-v-${i}"></td></tr>`; }).join("")}</tbody></table></div>`;
+}
+function cierreSalidas(R, out) {
+  const $m = document.getElementById("modulo");
+  const n = (v, d = 1) => (typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: d }) : esc(v ?? ""));
+  const ok = (t) => (t === "OK" ? '<span class="estado normal">OK</span>' : t === "Revisar" || /^Revisar/.test(t) ? `<span class="estado riesgo">${esc(t)}</span>` : esc(t));
+  const fe = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || "")); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; };
+  const P = R.PD;
+  if (P && $m.querySelector("table.pauta")) {
+    P.grupos.forEach((x, i) => { out("pa-n-" + i, esc(x.grupo)); out("pa-s-" + i, n(x.sug)); out("pa-u-" + i, "<b>" + n(x.usado) + "</b>"); out("pa-k-" + i, n(x.kcal, 0)); out("pa-p-" + i, n(x.prot)); out("pa-l-" + i, n(x.lip)); out("pa-c-" + i, n(x.cho)); });
+    out("pa-tk", n(P.tot.kcal, 0)); out("pa-tp", n(P.tot.prot)); out("pa-tl", n(P.tot.lip)); out("pa-tc", n(P.tot.cho));
+    out("pa-rk", n(P.req.kcal, 0)); out("pa-rp", n(P.req.prot)); out("pa-rl", n(P.req.lip)); out("pa-rc", n(P.req.cho));
+    for (const [k, c] of [["kcal", "k"], ["prot", "p"], ["lip", "l"], ["cho", "c"]]) out("pa-a" + c, (typeof P.adec[k] === "number" ? n(P.adec[k], 0) + " % " : "— ") + ok(P.ok[k]));
+  }
+  if (P && $m.querySelector("table.dist")) {
+    P.dist.forEach((d, t) => { out("di-u-" + t, n(d)); out("di-o-" + t, n(P.kcalObj[t], 0)); out("di-p-" + t, n(P.kcalT[t], 0)); out("di-d-" + t, typeof P.difT[t] === "number" ? n(P.difT[t], 0) + " %" : "—"); });
+    out("di-sum", n(P.sumDist) + " %"); out("di-ok", ok(P.distOK));
+    P.tiempos.forEach((r, i) => { out("pt-n-" + i, esc(P.grupos[i].grupo)); r.fila.forEach((v, t) => out(`pt-${i}-${t}`, v ? n(v) : "")); out("pt-ok-" + i, n(r.suma) + " " + ok(r.ok)); });
+  }
+  if (R.SEG) {
+    R.SEG.vac.forEach((v, i) => { const e = Calc.estadoColor(v, ESQ.colores); out("vac-" + i, e ? `<span class="estado ${e}">${esc(v)}</span>` : esc(v)); const tr = $m.querySelector(`tr[data-vac="${i}"]`); if (tr) tr.hidden = v === "No aplica"; });
+    const tv = $m.querySelector("tr[data-vac]"); if (tv) { const sec = tv.closest("section"), hay = R.SEG.vac.some((v) => v !== "No aplica"); if (sec) sec.hidden = !hay; }
+    R.SEG.prev.forEach((p, i) => { const e = Calc.estadoColor(p.est, ESQ.colores); out("prev-e-" + i, e ? `<span class="estado ${e}">${esc(p.est)}</span>` : esc(p.est)); out("prev-v-" + i, fe(p.vence)); const tr = $m.querySelector(`tr[data-prev="${i}"]`); if (tr) tr.hidden = p.est === "No aplica"; });
+  }
+}
+// ---------- R24 por porciones de intercambio ----------
+const pad2 = (i) => (i < 10 ? "0" : "") + i;
+function r24NFilas() {
+  const D = datos(); let ult = -1;
+  for (let i = 0; i < 30; i++) if (["tiempo", "hora", "prep", "alim", "n", "g"].some((f) => !vacio(D[`r24_${pad2(i)}_${f}`]))) ult = i;
+  return Math.min(30, Math.max(st.ui.r24n || 0, ult + 2, 5));
+}
+function r24TablaHTML(flash) {
+  const D = datos(), n = r24NFilas(), nf = (v) => (vacio(v) ? "" : esc(v));
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const p = `r24_${pad2(i)}_`, t = D[p + "tiempo"] || "";
+    rows.push(`<tr data-r24="${i}">
+      <td><select data-k="${p}tiempo" aria-label="Tiempo de comida, fila ${i + 1}"><option value=""></option>${Calc.TIEMPOS.map((o) => `<option ${t === o ? "selected" : ""}>${o}</option>`).join("")}</select></td>
+      ${flash ? "" : `<td><input type="text" class="hora" data-k="${p}hora" value="${nf(D[p + "hora"])}" placeholder="hh:mm" aria-label="Hora" autocomplete="off"></td><td><input type="text" data-k="${p}prep" value="${nf(D[p + "prep"])}" aria-label="Preparación" autocomplete="off"></td>`}
+      <td class="alim"><div class="combo"><input type="text" id="r24a_${i}" data-k="${p}alim" data-alim="1" value="${nf(D[p + "alim"])}" placeholder="Buscar alimento" aria-label="Alimento, fila ${i + 1}" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="combo-btn" data-a="combo-abrir" data-for="r24a_${i}" aria-label="Ver la lista completa" tabindex="-1">▾</button></div>
+        <small class="med" data-out="r24-${i}-medida"></small></td>
+      <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}n" min="0" max="50" step="any" value="${nf(D[p + "n"])}" aria-label="N° de medidas"><span class="err" hidden></span></span></td>
+      <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}g" min="0" max="5000" step="any" value="${nf(D[p + "g"])}" aria-label="Gramos"><span class="err" hidden></span></span></td>
+      <td class="num" data-out="r24-${i}-porc"></td><td class="num" data-out="r24-${i}-kcal"></td><td class="num" data-out="r24-${i}-prot"></td><td class="num" data-out="r24-${i}-lip"></td><td class="num" data-out="r24-${i}-cho"></td>
+      <td><button type="button" class="x" data-a="r24-borrar" data-i="${i}" aria-label="Borrar fila ${i + 1}" title="Borrar fila">×</button></td></tr>`);
+  }
+  const det = (Calc.calcular(D, optsDe(st.ci)).R24D || { filas: [] }).filas.filter((f) => f.alim);
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res r24"><thead><tr><th>Tiempo</th>${flash ? "" : "<th>Hora</th><th>Preparación</th>"}<th>Alimento · medida casera (1 porción)</th><th>N° medidas</th><th>Gramos</th><th>Porciones</th><th>kcal</th><th>Prot (g)</th><th>Lip (g)</th><th>CHO (g)</th><th></th></tr></thead>
+    <tbody>${rows.join("")}</tbody><tfoot><tr class="total"><td colspan="${flash ? 4 : 6}">Total intercambio${det.length ? " + R24 detallado" : ""}</td><td class="num" data-out="r24-t-porc"></td><td class="num" data-out="r24-t-kcal"></td><td class="num" data-out="r24-t-prot"></td><td class="num" data-out="r24-t-lip"></td><td class="num" data-out="r24-t-cho"></td><td></td></tr></tfoot></table></div>
+    <p class="sec-nota">${n < 30 ? '<button class="btn peq" data-a="r24-mas">+ Agregar filas</button> ' : ""}${flash ? "Consulta flash: sin hora ni preparación. " : ""}Al elegir un alimento sin tiempo de comida, se copia el tiempo de la fila anterior.</p>
+    ${det.length ? `<p class="sec-nota">R24 detallado (CARHE): ${det.length} alimento${det.length === 1 ? "" : "s"} (${esc(det.map((f) => f.alim.toLowerCase()).join(", "))}) <span data-out="r24-det-kcal"></span>. Se suman a los totales; se editan en la consulta completa (etapa 8).</p>` : ""}`;
+}
+// ---------- R24 detallado (CARHE) ----------
+function r24dNFilas() {
+  const D = datos(); let ult = -1;
+  for (let i = 0; i < 40; i++) if (["tiempo", "hora", "prep", "grupo", "alim", "n", "g"].some((f) => !vacio(D[`rc_${pad2(i)}_${f}`]))) ult = i;
+  return Math.min(40, Math.max(st.ui.rcn || 0, ult + 2, 5));
+}
+function r24dTablaHTML() {
+  const D = datos(), n = r24dNFilas(), nf = (v) => (vacio(v) ? "" : esc(v)), grupos = TAB.carhe ? TAB.carhe.grupos : [];
+  if (!TAB.carhe) asegurarCarhe();
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const p = `rc_${pad2(i)}_`, t = D[p + "tiempo"] || "", g = D[p + "grupo"] || "";
+    rows.push(`<tr data-rc="${i}">
+      <td><select data-k="${p}tiempo" aria-label="Tiempo, fila ${i + 1}"><option value=""></option>${Calc.TIEMPOS.map((o) => `<option ${t === o ? "selected" : ""}>${o}</option>`).join("")}</select></td>
+      <td><input type="text" class="hora" data-k="${p}hora" value="${nf(D[p + "hora"])}" placeholder="hh:mm" aria-label="Hora" autocomplete="off"></td>
+      <td><input type="text" data-k="${p}prep" value="${nf(D[p + "prep"])}" aria-label="Preparación" autocomplete="off"></td>
+      <td><select data-k="${p}grupo" aria-label="Grupo CARHE, fila ${i + 1}"><option value="">Todos</option>${grupos.map((o) => `<option ${g === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></td>
+      <td class="alim"><div class="combo"><input type="text" id="rca_${i}" data-k="${p}alim" data-alim="carhe" value="${nf(D[p + "alim"])}" placeholder="${TAB.carhe ? "Buscar alimento" : "Cargando tabla…"}" aria-label="Alimento CARHE, fila ${i + 1}" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="combo-btn" data-a="combo-abrir" data-for="rca_${i}" aria-label="Ver la lista" tabindex="-1">▾</button></div>
+        <small class="med" data-out="rc-${i}-medida"></small></td>
+      <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}n" min="0" max="50" step="any" value="${nf(D[p + "n"])}" aria-label="N° de medidas"><span class="err" hidden></span></span></td>
+      <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}g" min="0" max="5000" step="any" value="${nf(D[p + "g"])}" aria-label="Gramos (opcional)"><span class="err" hidden></span></span></td>
+      <td class="num" data-out="rc-${i}-g"></td><td class="num" data-out="rc-${i}-kcal"></td><td class="num" data-out="rc-${i}-prot"></td><td class="num" data-out="rc-${i}-lip"></td><td class="num" data-out="rc-${i}-cho"></td>
+      <td><button type="button" class="x" data-a="rc-borrar" data-i="${i}" aria-label="Borrar fila ${i + 1}" title="Borrar fila">×</button></td></tr>`);
+  }
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res r24 r24d"><thead><tr><th>Tiempo</th><th>Hora</th><th>Preparación</th><th>Grupo (filtra)</th><th>Alimento (CARHE) · medida casera</th><th>N° medidas</th><th>Gramos (opc.)</th><th>g usados</th><th>kcal</th><th>Prot</th><th>Lip</th><th>CHO</th><th></th></tr></thead>
+    <tbody>${rows.join("")}</tbody><tfoot><tr class="total"><td colspan="7">Total R24 detallado</td><td></td><td class="num" data-out="rc-t-kcal"></td><td class="num" data-out="rc-t-prot"></td><td class="num" data-out="rc-t-lip"></td><td class="num" data-out="rc-t-cho"></td><td></td></tr></tfoot></table></div>
+    <p class="sec-nota">${n < 40 ? '<button class="btn peq" data-a="rc-mas">+ Agregar filas</button> ' : ""}Gramos = gramos escritos o N° de medidas × g/medida. El total se suma al R24 por intercambio (energía y macros) y llena la ingesta de nutrientes críticos que no se escriba a mano.</p>`;
+}
+function r24dSalidas(R, out) {
+  const f1 = (v, d = 1) => (typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: d }) : "");
+  const pf = (R.R24D && R.R24D.porFila) || {}, K = Calc.DET_KEYS || ["Kcal", "Prot", "CHO", "Azucar", "Fibra", "Lip"];
+  const ix = (k) => K.indexOf(k);
+  for (let i = 0; i < r24dNFilas(); i++) {
+    const f = pf[i];
+    out(`rc-${i}-medida`, f && f.fila !== "" && f.medida ? esc(f.medida) + " · " + f1(f.gmed) + " g" : f && f.alim && TAB.carhe ? '<span class="pend">No está en la tabla CARHE</span>' : "");
+    out(`rc-${i}-g`, f && typeof f.g === "number" ? f1(f.g) : "");
+    for (const [o, k, d] of [["kcal", "Kcal", 0], ["prot", "Prot", 1], ["lip", "Lip", 1], ["cho", "CHO", 1]]) out(`rc-${i}-${o}`, f && f.nut ? f1(f.nut[ix(k)], d) : "");
+  }
+  const t = (R.R24D && R.R24D.tot) || [];
+  for (const [o, k, d] of [["kcal", "Kcal", 0], ["prot", "Prot", 1], ["lip", "Lip", 1], ["cho", "CHO", 1]]) out(`rc-t-${o}`, f1(t[ix(k)], d));
+}
+// ---------- Tendencia de frecuencia de consumo (TFC) ----------
+function tfcTablaHTML() {
+  const D = datos(), R = calc(), nf = (v) => (vacio(v) ? "" : esc(v));
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res tfc"><thead><tr><th>Grupo</th><th>Frecuencia</th><th>Veces</th><th>Porciones / vez</th><th>Porc./día</th><th>Porc./semana</th><th>Recomendación</th><th>% cumplim.</th><th>Conclusión</th></tr></thead><tbody>
+    ${R.TFC.map((x, i) => { const p = `tfc_${pad2(i)}_`, fr = D[p + "frec"] || "";
+      return `<tr><td>${esc(x.n)}</td><td><select data-k="${p}frec" aria-label="Frecuencia: ${esc(x.n)}"><option value=""></option>${LISTAS.Lista_Frecuencia.map((o) => `<option ${fr === o ? "selected" : ""}>${o}</option>`).join("")}</select></td>
+        <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}veces" min="0" max="50" step="any" value="${nf(D[p + "veces"])}" aria-label="Veces"><span class="err" hidden></span></span></td>
+        <td><span class="campo mini"><input type="number" inputmode="decimal" data-k="${p}porc" min="0" max="50" step="any" value="${nf(D[p + "porc"])}" aria-label="Porciones por vez"><span class="err" hidden></span></span></td>
+        <td class="num" data-out="tfc-${i}-dia"></td><td class="num" data-out="tfc-${i}-sem"></td><td data-out="tfc-${i}-rec"></td><td class="num" data-out="tfc-${i}-pct"></td><td data-out="tfc-${i}-cls"></td></tr>`; }).join("")}</tbody></table></div>`;
+}
+function tfcSalidas(R, out) {
+  const f1 = (v, d = 1) => (typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: d }) : "");
+  R.TFC.forEach((x, i) => {
+    out(`tfc-${i}-dia`, f1(x.dia, 2)); out(`tfc-${i}-sem`, f1(x.sem, 1));
+    out(`tfc-${i}-rec`, esc(x.txt) + (typeof x.rec === "number" && /pauta/.test(x.txt) ? " (" + f1(x.rec) + ")" : ""));
+    out(`tfc-${i}-pct`, typeof x.pct === "number" ? f1(x.pct, 0) + " %" : "—");
+    const e = x.cls === "Adecuado" ? "normal" : x.cls === "Insuficiente" ? "riesgo" : x.cls === "Excesivo" ? "alterado" : "";
+    out(`tfc-${i}-cls`, e ? `<span class="estado ${e}">${esc(x.cls)}</span>` : '<span class="pend">—</span>');
+  });
+}
+function r24Salidas(R, out) {
+  const f1 = (v, d = 1) => (typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: d }) : "");
+  const n = r24NFilas(), pf = R.R24.porFila;
+  for (let i = 0; i < n; i++) {
+    const f = pf[i] || {};
+    out(`r24-${i}-medida`, f.medida ? esc(f.medida + (typeof f.gpor === "number" ? " = " + f.gpor + " g" : "") + " · " + f.grupo) : f.alim ? (f.grupo ? esc(f.grupo) : '<span class="err-t">No está en la lista: use «Otro – grupo»</span>') : "");
+    out(`r24-${i}-porc`, f1(f.porc, 2)); out(`r24-${i}-kcal`, f1(f.kcal, 0)); out(`r24-${i}-prot`, f1(f.prot)); out(`r24-${i}-lip`, f1(f.lip)); out(`r24-${i}-cho`, f1(f.cho));
+  }
+  const tp = R.R24.filas.reduce((a, f) => a + (typeof f.porc === "number" ? f.porc : 0), 0);
+  out("r24-t-porc", f1(tp, 1)); out("r24-t-kcal", f1(R.Rec24_Kcal, 0)); out("r24-t-prot", f1(R.Rec24_Prot)); out("r24-t-lip", f1(R.Rec24_Lip)); out("r24-t-cho", f1(R.Rec24_CHO));
+  out("r24-det-kcal", R.R24D && R.R24D.pendiente ? "(cargando tabla CARHE…)" : "= " + f1(R.Det24_Kcal, 0) + " kcal");
+}
+// Nutrientes críticos: tabla con la ingesta y la PD manual editables (las salidas se llenan en actualizar)
+function microTablaHTML(flash) {
+  const D = datos(), filas = Calc.calcular(D, optsDe(st.ci)).NC || [];
+  const NOM = ["Hierro", "Calcio", "Zinc", "Vitamina D", "Vitamina B12", "Vitamina A", "Vitamina C", "Folato", "Magnesio", "Fósforo", "Fibra", "Sodio"];
+  const KEY = ["hierro", "calcio", "zinc", "vitamina_d", "vitamina_b12", "vitamina_a", "vitamina_c", "folato", "magnesio", "fosforo", "fibra", "sodio"];
+  const UN = ["mg", "mg", "mg", "µg", "µg", "µg", "mg", "µg", "mg", "mg", "g", "mg"];
+  const rows = NOM.map((n, i) => {
+    const k = "nc_" + KEY[i], kp = k + "_pd", v = D[k], vp = D[kp] || "";
+    return `<tr data-nc="${i}"><td><span data-out="nc-star-${i}"></span>${esc(n)} <small>(${UN[i]})</small></td><td class="num" data-out="nc-rec-${i}">—</td><td data-out="nc-tipo-${i}">—</td><td class="num" data-out="nc-ul-${i}">—</td>
+      <td><span class="campo mini" data-campo="${k}"><input type="number" inputmode="decimal" data-k="${k}" min="0" max="100000" step="any" value="${vacio(v) ? "" : esc(v)}" aria-label="Ingesta de ${esc(n)}" placeholder="—"><span class="err" hidden></span></span></td>
+      <td class="num" data-out="nc-adec-${i}">—</td><td data-out="nc-cls-${i}">—</td>
+      <td><select data-k="${kp}" aria-label="PD de ${esc(n)}"><option value="">Auto</option>${["Alto en", "Bajo en", "Normal"].map((o) => `<option ${vp === o ? "selected" : ""}>${o}</option>`).join("")}</select> <span data-out="nc-pd-${i}"></span></td></tr>`;
+  }).join("");
+  return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res micro"><thead><tr><th>Nutriente</th><th>Recomendación</th><th>Tipo</th><th>UL</th><th>Ingesta</th><th>% adecuación</th><th>Clasificación</th><th>PD</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${flash ? `<p class="sec-nota"><label class="chk-inline"><input type="checkbox" data-a="micro-todos" ${st.ui.microTodos ? "checked" : ""}> Ver todos los micronutrientes (consulta flash: solo los críticos ★)</label></p>` : ""}`;
+}
+function calcHTML(tipo) {
+  if (tipo === "edad") return `<dl class="calc">
+    <dt>Edad</dt><dd data-out="Edad_Texto">—</dd>
+    <dt>Edad en meses cumplidos</dt><dd class="num" data-out="Edad_Meses">—</dd>
+    <dt>Edad en meses para tablas</dt><dd class="num" data-out="Edad_Meses_Aprox">—</dd>
+    <dt>Edad decimal</dt><dd class="num" data-out="Edad_Dec">—</dd>
+    <dt>Ciclo vital automático</dt><dd data-out="Ciclo_Auto">—</dd>
+    <dt>Ciclo vital usado</dt><dd><b data-out="Ciclo">—</b></dd>
+    <dt>Grupo etario</dt><dd data-out="GrupoEtario">—</dd></dl>
+    <p class="sec-nota">Edad en meses para tablas: 16 días o más pasan al mes siguiente (Patrones de crecimiento p. 10). En prematuros se usa la edad corregida cuando corresponde (módulo Prematuro).</p>
+    <p class="sec-nota" data-out="error-fechas" style="color:var(--bad)" hidden></p>`;
+  if (tipo === "edadGest") return `<dl class="calc"><dt>Edad</dt><dd data-out="Edad_Texto">—</dd><dt>Edad en años</dt><dd class="num" data-out="Edad_Anios">—</dd></dl>
+    <p class="sec-nota" data-out="gest-menor" hidden>Gestante menor de 18 años: para el GEB se usa la ecuación del tramo 18-30 años (etapa 8).</p>
+    <p class="sec-nota" data-out="error-fechas" style="color:var(--bad)" hidden></p>`;
+  if (tipo === "pc") return `<div data-live="pc_info"></div>`;
+  if (tipo === "apgar") return `<dl class="calc"><dt>APGAR familiar</dt><dd data-out="APGAR_Cls">—</dd></dl>`;
+  if (tipo === "morisky") return `<dl class="calc" style="padding-bottom:14px"><dt>Adherencia</dt><dd data-out="Morisky">—</dd></dl>`;
+  if (tipo === "tabaco") return `<dl class="calc" style="padding-bottom:14px"><dt>Cigarrillos al día</dt><dd class="num" data-out="Cig_Dia">—</dd>
+    <dt>Derivación</dt><dd data-out="Deriv_Tabaco">—</dd></dl>`;
+  if (tipo === "audit") return `<p class="sec-nota" data-out="audit-na" hidden></p><dl class="calc" data-out="audit-res">
+    <dt>AUDIT-C (preguntas 1-3)</dt><dd><span class="num" data-out="Audit_C">—</span> <span data-out="Audit_C_Cls"></span></dd>
+    <dt>Puntaje AUDIT total</dt><dd class="num" data-out="Audit_Score">—</dd>
+    <dt>Nivel de riesgo</dt><dd data-out="Audit_Riesgo">—</dd>
+    <dt>Intervención sugerida</dt><dd data-out="Audit_Interv">—</dd></dl>
+    <p class="sec-nota" style="padding-bottom:14px">Cortes: 0-7 bajo riesgo · 8-15 riesgo · ≥ 16 posible dependencia; AUDIT-C ≥ 5 hombres, ≥ 4 mujeres (${esc(ESQ.audit.fuente)}) <button class="verif" type="button" data-a="verif-aud">⚠ verificar</button></p>
+    <p class="sec-nota" data-out="verif-aud" hidden style="padding-bottom:14px">${esc(ESQ.audit.verificar)}</p>`;
+  if (tipo === "af") return `<dl class="calc"><dt>Actividad física</dt><dd><span class="num" data-out="AF_MinSem">—</span> min/semana · meta ≥ 150 min de actividad moderada</dd></dl>`;
+  if (tipo === "gpa") return `<dl class="calc"><dt>GPA</dt><dd class="num" data-out="GPA">—</dd><dt>SG</dt><dd class="num" data-out="SG">—</dd></dl>
+    <p class="sec-nota" data-out="gest-menor" hidden>Gestante menor de 18 años: para el GEB se usa la ecuación del tramo 18-30 años (etapa 8).</p>`;
+  return "";
+}
+function pill(txt, estado) { return estado ? `<span class="estado ${estado}">${esc(txt)}</span>` : esc(txt); }
+
+// ---------- actualización en vivo ----------
+function actualizar() {
+  if (!st.p) return;
+  const R = calc(), D = datos(), $m = document.getElementById("modulo");
+  const out = (k, html) => $m.querySelectorAll(`[data-out="${k}"]`).forEach((e) => { e.innerHTML = html; });
+  const show = (k, on) => $m.querySelectorAll(`[data-out="${k}"]`).forEach((e) => { e.hidden = !on; });
+  const sinEdad = R.Edad_Anios === "";
+  $m.querySelectorAll("section[data-cuando]").forEach((s) => {
+    const c = s.dataset.cuando;
+    s.hidden = c !== "todos" && (sinEdad && !R.Ciclo ? true : !condSec[c](R) || (R.Embarazada && OCULTAR_EMB.has(c)));
+  });
+  show("sin-edad", sinEdad && !R.Ciclo);
+  $m.querySelectorAll("[data-campo]").forEach((el) => { const k = el.dataset.campo; el.hidden = condCampo[k] ? !condCampo[k](R, D) : false; });
+  $m.querySelectorAll("[data-lbl]").forEach((el) => { el.textContent = etiqueta(el.dataset.lbl, R); });
+  const t = (v) => (v === "" || v === null || v === undefined ? "—" : v);
+  out("Edad_Texto", esc(t(R.Edad_Texto)));
+  out("Edad_Anios", esc(t(R.Edad_Anios)));
+  out("Edad_Meses", esc(t(R.Edad_Meses)));
+  out("Edad_Meses_Aprox", esc(t(R.Edad_Meses_Aprox)));
+  out("Edad_Dec", R.Edad_Dec === "" ? "—" : R.Edad_Dec.toFixed(2).replace(".", ","));
+  out("Ciclo_Auto", esc(t(R.Ciclo_Auto)));
+  out("Ciclo", esc(t(R.Ciclo)) + (R.Ciclo_Manual && R.Ciclo_Manual !== "Automático" ? ' <span class="chip">sobrescrito</span>' : ""));
+  out("GrupoEtario", esc(t(R.GrupoEtario)));
+  out("APGAR_Cls", R.APGAR_Cls ? pill(R.APGAR_Cls, Calc.estadoColor(R.APGAR_Cls, ESQ.colores)) : "—");
+  out("Morisky", R.Morisky ? pill(R.Morisky, R.Morisky === "Adherente" ? "normal" : "riesgo") : "Responda las 4 preguntas");
+  out("AF_MinSem", esc(t(R.AF_MinSem)));
+  $m.querySelectorAll("[data-calcw]").forEach((el) => { const c = condCalc[el.dataset.calcw]; el.hidden = c ? !c(R, D) : false; });
+  out("Cig_Dia", R.Cig_Dia === "" ? "—" : (Math.round(R.Cig_Dia * 10) / 10).toString().replace(".", ","));
+  out("Deriv_Tabaco", R.Deriv_Tabaco ? pill(R.Deriv_Tabaco.replace(/^• /, ""), "riesgo") : "—");
+  const audNA = R.Audit_Riesgo === "No aplica (< 15 años)";
+  show("audit-na", audNA); out("audit-na", "No aplica (< 15 años): el AUDIT se aplica desde los 15 años (planilla SEGUIMIENTO!B65).");
+  show("audit-res", !audNA);
+  out("Audit_C", R.Audit_C_Cls ? esc(R.Audit_C) : "—");
+  out("Audit_C_Cls", R.Audit_C_Cls ? pill(R.Audit_C_Cls, R.Audit_C_Cls.startsWith("Bajo") ? "normal" : "riesgo") : "");
+  out("Audit_Score", R.Audit_Riesgo === "Sin aplicar" ? "—" : esc(R.Audit_Score));
+  out("Audit_Riesgo", pill(R.Audit_Riesgo, { "Consumo de bajo riesgo": "normal", "Consumo de riesgo": "riesgo", "Posible consumo problema o dependencia": "alterado" }[R.Audit_Riesgo] || ""));
+  out("Audit_Interv", esc(R.Audit_Interv || "—"));
+  $m.querySelectorAll("[data-nivel]").forEach((el) => el.classList.toggle("sel", el.dataset.nivel === R.Actividad));
+  out("GPA", esc(t(R.GPA))); out("SG", esc(t(R.SG)));
+  show("gest-menor", R.Edad_Anios !== "" && R.Edad_Anios < 18);
+  out("error-fechas", esc(R.errorFechas)); show("error-fechas", !!R.errorFechas);
+  out("alertas", alertasHTML(R));
+  const tcaOn = !!R.Alerta_TCA;
+  show("sec-tca-alerta", tcaOn);
+  if (tcaOn) out("alerta-tca", `<ul class="alertas"><li>${esc(R.Alerta_TCA.replace(/^• /, ""))} <span class="verif" title="Criterio: 1 respuesta «Sí» (decisión docente)">⚠ verificar</span></li></ul>`);
+  // Tanner
+  const tg = D.px_tanner;
+  if ($m.querySelector('[data-out="tanner-desc"]')) {
+    const sx = R.SexoC ? [R.SexoC] : ["F", "M"];
+    out("tanner-desc", tg ? sx.map((s) => `<div><b>${s === "F" ? "Mujer" : "Hombre"}, grado ${tg}:</b> ${esc(ESQ.tanner[s][tg - 1][0])} <b>Edad biológica:</b> ${esc(ESQ.tanner[s][tg - 1][1])}.</div>`).join("") : "Seleccione el grado para ver la descripción y la edad biológica.");
+  }
+  if (R.PC && R.PC.activa) asegurarBrooks();
+  if (R.R24D && R.R24D.pendiente) asegurarCarhe();
+  if ($m.querySelector("tr[data-r24]") && R.R24) r24Salidas(R, out);
+  if ($m.querySelector("tr[data-lab]") && R.LAB) labSalidas(R, out);
+  if (["pd", "seg"].includes(st.mod)) cierreSalidas(R, out);
+  if ($m.querySelector("table.r24d")) r24dSalidas(R, out);
+  if ($m.querySelector("table.tfc")) tfcSalidas(R, out);
+  if ($m.querySelector("tr[data-nc]") && R.NC) {
+    const flash = modoDe(st.p) === "flash", nf = (v, d) => typeof v === "number" ? v.toLocaleString("es-CL", { maximumFractionDigits: d }) : esc(v === "" ? "—" : v);
+    R.NC.forEach((o, i) => {
+      out("nc-star-" + i, o.critico ? '<b class="star" title="Crítico para el ciclo vital">★</b> ' : "");
+      out("nc-rec-" + i, nf(o.rec, 2)); out("nc-tipo-" + i, esc(o.tipo)); out("nc-ul-" + i, nf(o.ul, 0));
+      out("nc-adec-" + i, typeof o.adec === "number" ? nf(o.adec, 0) + " %" : "—");
+      const e = Calc.estadoColor(o.cls, ESQ.colores); out("nc-cls-" + i, o.cls === "—" ? "—" : e ? `<span class="estado ${e}">${esc(o.cls)}</span>` : esc(o.cls));
+      out("nc-pd-" + i, o.pd ? `<b>${esc(o.pd)}</b>${o.pdManual ? "" : ' <small>(auto)</small>'}` : "");
+      const tr = $m.querySelector(`tr[data-nc="${i}"]`); if (tr) tr.hidden = flash && !st.ui.microTodos && !o.critico && !o.manual && !o.pdManual;
+      const ph = tr && tr.querySelector("input[data-k]"); if (ph) ph.placeholder = o.det > 0 ? nf(o.det, 2) + " (R24)" : "—";
+    });
+  }
+  const lives = $m.querySelectorAll("[data-live]");
+  if (lives.length) {
+    const ctx = { R, D, T: TAB, ESQ, hist: null, ui: st.ui, flash: modoDe(st.p) === "flash" };
+    lives.forEach((el) => {
+      const sec = el.closest("section"); if (sec && sec.hidden) return;
+      const fn = Etapa2.live[el.dataset.live]; if (!fn) return;
+      if (!ctx.hist && /zscore|brooks/.test(el.dataset.live)) ctx.hist = historial();
+      try { el.innerHTML = fn(ctx); } catch (e) { el.innerHTML = `<p class="sec-nota">No se pudo calcular este bloque (${esc(e.message)}).</p>`; }
+    });
+  }
+  const tit = document.getElementById("tituloPac"); if (tit) tit.textContent = D.nombre || "Sin nombre";
+  $m.querySelectorAll("details.mas").forEach((d) => {
+    const cs = [...d.querySelectorAll("[data-campo]")].filter((c) => !c.hidden);
+    const resp = cs.filter((c) => { const v = D[c.dataset.campo]; return !(v === undefined || v === "" || (Array.isArray(v) && !v.length)); }).length;
+    d.hidden = cs.length === 0;
+    d.querySelector("[data-masn]").textContent = `· ${cs.length} pregunta${cs.length === 1 ? "" : "s"}${resp ? `, ${resp} respondida${resp === 1 ? "" : "s"}` : ""}`;
+  });
+  renderPanel(R);
+}
+function alertasHTML(R) {
+  if (!R.alertas.length) return `<span class="estado normal">Sin alertas</span>`;
+  return `<ul class="alertas">${R.alertas.map((a) => `<li>${esc(a.replace(/^• /, ""))}</li>`).join("")}</ul>`;
+}
+function renderPanel(R) {
+  const p = st.p, $p = document.getElementById("panel"); if (!$p) return;
+  const pend = (e) => `<b class="pend">Etapa ${e}</b>`;
+  const g = false; // etapa 7: la gestante ya tiene todos sus cálculos
+  const G = R.GES || {};
+  $p.innerHTML = `<h2>Resultados clave</h2><div class="kv">
+    <div><span>Edad</span><b>${esc(R.Edad_Texto || "—")}</b></div>
+    <div><span>Ciclo vital · grupo etario</span><b>${esc(R.Ciclo || "—")}${R.GrupoEtario ? " · " + esc(R.GrupoEtario) : ""}</b></div>
+    ${R.Embarazada ? `<div><span>Gestante · semanas de gestación</span><b class="num">${R.SG !== "" ? R.SG + " SG" : "—"}${G.mult ? " · múltiple" : ""}</b></div>` : ""}
+    ${R.Embarazada && G.enPre && G.enPre !== "Falta dato" ? `<div><span>Pregestacional · incremento</span><b>${esc(G.enPre)}${G.incCls && !/Falta|No aplica/.test(G.incCls) ? " · incremento " + esc(G.incCls.toLowerCase()) : ""}</b></div>` : ""}
+    ${R.Embarazada && G.extra ? `<div><span>Kcal extra por embarazo</span><b class="num">${G.extra.toLocaleString("es-CL")} kcal/día</b></div>` : ""}
+    ${R.Nodriza ? `<div><span>Nodriza</span><b>${typeof R.GES.nodMeses === "number" ? R.GES.nodMeses + " meses posparto" : "Sí"}</b></div>` : ""}
+    <div><span>Calificación nutricional</span>${g ? pend(8) : R.Calificacion_Nutricional && !/Falta|No aplica/.test(R.Calificacion_Nutricional) ? `<b>${Etapa2.estado(R.Calificacion_Nutricional) ? `<span class="estado ${Etapa2.estado(R.Calificacion_Nutricional)}">${esc(R.Calificacion_Nutricional)}</span>` : esc(R.Calificacion_Nutricional)}</b>` : '<b class="pend">Ingrese peso y talla</b>'}</div>
+    ${!g && R.Ciclo === "NNA" && R.Dx_Talla && !/Falta|No aplica/.test(R.Dx_Talla) ? `<div><span>Talla</span><b>${esc(R.Dx_Talla)}</b></div>` : ""}
+    <div><span>Peso para requerimientos</span>${g ? pend(7) : typeof R.Peso_Usado === "number" ? `<b>${esc(R.PesoTipo)} · <span class="num">${Etapa2.fmt(R.Peso_Usado, 1)} kg</span></b>` : '<b class="pend">Ingrese peso y talla</b>'}</div>
+    <div><span>GET</span>${g ? pend(7) : typeof R.GET_Final === "number" ? `<b><span class="num">${R.GET_Final.toLocaleString("es-CL")} kcal/día</span> · ${esc(R.Nom_Kcal)}</b>` : '<b class="pend">Falta peso</b>'}</div>
+    <div><span>Macronutrientes (P · L · CHO)</span>${g ? pend(7) : typeof R.Prot_g === "number" && typeof R.CHO_g === "number" ? `<b class="num">${Etapa2.fmt(R.Prot_g, 1)} · ${Etapa2.fmt(R.Lip_g, 1)} · ${Etapa2.fmt(R.CHO_g, 1)} g</b>` : '<b class="pend">—</b>'}</div>
+    <div><span>VHT</span>${g ? pend(7) : typeof R.VHT === "number" ? `<b class="num">${R.VHT.toLocaleString("es-CL")} ml/día · ${Etapa2.fmt(R.VHT_Vasos, 1)} vasos</b>` : '<b class="pend">—</b>'}</div>
+    <div><span>Ingesta R24</span>${R.Rec24_Kcal > 0 ? `<b><span class="num">${Math.round(R.Rec24_Kcal).toLocaleString("es-CL")} kcal</span>${typeof R.Adec24_Energia === "number" ? ` · ${Math.round(R.Adec24_Energia)} % · ${esc(R.Cls24_Energia.toLowerCase())}` : ""}</b>` : '<b class="pend">Sin registro</b>'}</div>
+    <div><span>DNI</span>${g ? pend(7) : R.DNI ? `<b class="dni-panel">${esc(R.DNI.length > 230 ? R.DNI.slice(0, 230) + "…" : R.DNI)}</b>` : '<b class="pend">Faltan datos</b>'}</div>
+  </div>
+  <div class="panel-alertas"><span style="color:var(--muted);font-size:12px">ALERTAS Y DERIVACIONES (${R.alertas.length})</span>
+    ${R.alertas.length ? `<ul>${R.alertas.map((a) => `<li>${esc(a === R.Deriv_Alcohol || a === R.Deriv_Tabaco ? a.replace(/^• /, "") : a.replace(/^• /, "").split(":")[0])}</li>`).join("")}</ul>` : `<div><span class="estado normal">Sin alertas</span></div>`}</div>`;
+}
+
+// ---------- eventos ----------
+function leerValor(el, mostrarErr) {
+  const k = el.dataset.k, f = CAMPOS[k] || (el.type === "number" ? { type: "number", min: +el.min, max: +el.max } : { type: el.tagName === "SELECT" ? "list" : "text" }); // filas del R24 (sin ficha en el esquema)
+  if (el.dataset.multi !== undefined) return [...document.querySelectorAll(`input[data-k="${k}"][data-multi]:checked`)].map((x) => x.value);
+  if (f.type === "number" && el.dataset.gramos !== undefined) {
+    const caja = el.closest(".campo"), err = caja.querySelector(".err");
+    if (el.value === "") { caja.classList.remove("invalido"); err.hidden = true; return ""; }
+    const g = Number(el.value.replace(",", "."));
+    if (!isFinite(g) || g < 300 || g > 30000) { if (!mostrarErr) return undefined; caja.classList.add("invalido"); err.hidden = false; err.textContent = "Ingrese el peso en gramos, entre 300 y 30.000."; return undefined; }
+    caja.classList.remove("invalido"); err.hidden = true; return g / 1000;
+  }
+  if (f.type === "number") {
+    const caja = el.closest(".campo"), err = caja.querySelector(".err");
+    if (el.value === "") { caja.classList.remove("invalido"); err.hidden = true; return ""; }
+    const n = Number(el.value.replace(",", "."));
+    if (!isFinite(n) || n < f.min || n > f.max) {
+      if (!mostrarErr) return undefined;
+      caja.classList.add("invalido"); err.hidden = false; err.textContent = `Ingrese un número entre ${String(f.min).replace(".", ",")} y ${String(f.max).replace(".", ",")}.`; return undefined;
+    }
+    caja.classList.remove("invalido"); err.hidden = true; return n;
+  }
+  if (f.type === "date") {
+    // Mientras se escribe el año (2, 20, 202…) el navegador entrega fechas como 0002-05-10: se ignoran hasta tener un año completo
+    if (el.value === "") return "";
+    const y = +el.value.slice(0, 4);
+    return y >= 1900 && y <= 2100 ? el.value : undefined;
+  }
+  if (f.type === "tanner") return el.value;
+  if (f.type === "scored") return el.value === "" ? "" : Number(el.value);
+  return el.value;
+}
+function asignar(k, v) {
+  if (!st.p) return;
+  const D = datos(); if (v === undefined) return;
+  if (vacio(v) || (Array.isArray(v) && !v.length)) delete D[k]; else D[k] = v;
+  const lista = { px_farm_si: "px_farm_lista", px_supl_si: "px_supl_lista" }[k];
+  if (lista && v === "Sí" && !Array.isArray(D[lista])) { D[lista] = [{ nombre: "", dosis: "", funcion: "" }]; const y = window.scrollY; renderModulo(); window.scrollTo(0, y); }
+  if (k === "px_estab") {
+    for (const kk of ["px_curso", "px_jornada"]) { const ops = (ESQ.opciones_din[CAMPOS[kk].dyn] || {})[v] || []; if (!ops.includes(D[kk])) delete D[kk]; }
+    const y = window.scrollY; renderModulo(); window.scrollTo(0, y);
+  }
+  if (k === "pc_base") { const y = window.scrollY; vistaFicha(); window.scrollTo(0, y); }
+  else if (["so_emb", "sexo", "so_sgnac", "fnac", "feval", "ciclo_manual"].includes(k)) refrescarNav();
+  actualizar(); programarGuardado();
+}
+// ---------- lista desplegable de fármacos y suplementos ----------
+const normTxt = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+let combo = null; // { input, items, idx, el }
+function comboCerrar() { if (combo) { combo.el.remove(); combo.input.setAttribute("aria-expanded", "false"); combo = null; } }
+let DIC_ALIM = null;
+const dicAlim = () => DIC_ALIM || (DIC_ALIM = Object.fromEntries(TAB.t4.med.map((m) => [m[0], (m[2] ? m[2] + (typeof m[3] === "number" ? " (" + m[3] + " g)" : "") + " · " : "") + m[1]])));
+function comboAbrir(input, todo) {
+  comboCerrar();
+  const alim = !!input.dataset.alim, carhe = input.dataset.alim === "carhe", k = input.dataset.med;
+  if (carhe && !TAB.carhe) { asegurarCarhe(); return; }
+  const dic = carhe ? dicCarhe(datos()[input.dataset.k.replace(/_alim$/, "_grupo")]) : alim ? dicAlim() : DIC(CAMPOS[k].cat), q = todo ? "" : normTxt(input.value).trim();
+  const nombres = alim ? Object.keys(dic) : Object.keys(dic).sort((a, b) => a.localeCompare(b, "es"));
+  const items = (q ? nombres.filter((n) => normTxt(n).includes(q) || normTxt(dic[n]).includes(q)) : nombres).slice(0, carhe ? 120 : 100000);
+  const el = document.createElement("div"); el.className = "combo-lista"; el.setAttribute("role", "listbox");
+  el.innerHTML = items.length ? items.map((n, i) => `<div class="combo-op" role="option" data-i="${i}"><b>${esc(n)}</b><span>${esc(dic[n])}</span></div>`).join("")
+    : `<div class="combo-vacio">${alim ? "No está en la lista: use «Otro – grupo» y anote el N° de porciones." : "No está en la lista. Siga escribiendo y anote la función a mano."}</div>`;
+  input.parentElement.appendChild(el); input.setAttribute("aria-expanded", "true");
+  combo = { input, items, idx: -1, el };
+  el.addEventListener("mousedown", (e) => { const op = e.target.closest(".combo-op"); if (!op) return; e.preventDefault(); comboElegir(+op.dataset.i); });
+}
+function comboElegir(i) {
+  if (!combo || i < 0 || i >= combo.items.length) return;
+  const inp = combo.input; inp.value = combo.items[i]; comboCerrar();
+  if (inp.dataset.alim) { r24Alimento(inp.dataset.k, inp.value); const nx = inp.closest("tr").querySelector('input[data-k$="_n"]'); if (nx) nx.focus(); return; }
+  medInput(inp); inp.focus();
+}
+function comboMarcar(d) {
+  if (!combo || !combo.items.length) return;
+  combo.idx = Math.max(0, Math.min(combo.items.length - 1, combo.idx + d));
+  combo.el.querySelectorAll(".combo-op").forEach((o, j) => o.classList.toggle("act", j === combo.idx));
+  const a = combo.el.querySelector(".combo-op.act"); if (a) a.scrollIntoView({ block: "nearest" });
+}
+document.addEventListener("keydown", (e) => {
+  const t = e.target; if (!t.dataset || !((t.dataset.f === "nombre" && t.dataset.med) || t.dataset.alim)) return;
+  if (e.key === "ArrowDown") { e.preventDefault(); if (!combo) comboAbrir(t, !t.value); comboMarcar(1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); comboMarcar(-1); }
+  else if (e.key === "Enter" && combo && combo.idx >= 0) { e.preventDefault(); comboElegir(combo.idx); }
+  else if (e.key === "Escape") comboCerrar();
+});
+document.addEventListener("focusin", (e) => { const t = e.target; if (t.dataset && ((t.dataset.f === "nombre" && t.dataset.med) || t.dataset.alim)) comboAbrir(t, !t.value); else if (combo && !combo.el.contains(t)) comboCerrar(); });
+document.addEventListener("mousedown", (e) => { if (combo && !combo.el.contains(e.target) && e.target !== combo.input && !e.target.closest(".combo-btn")) comboCerrar(); });
+
+// Lista CARHE (1.048 alimentos), filtrada por el grupo elegido en la fila
+let DIC_CARHE = null;
+function dicCarhe(grupo) {
+  if (!TAB.carhe) return {};
+  if (!DIC_CARHE || DIC_CARHE.src !== TAB.carhe) { DIC_CARHE = { src: TAB.carhe, g: {} }; }
+  const key = grupo || "*";
+  if (!DIC_CARHE.g[key]) { const o = {}; for (const r of TAB.carhe.a) if (!grupo || r[1] === grupo) if (!(r[0] in o)) o[r[0]] = (r[3] || "") + (r[4] ? " · " + String(r[4]).replace(".", ",") + " g" : "") + (grupo ? "" : " · " + r[1]); DIC_CARHE.g[key] = o; }
+  return DIC_CARHE.g[key];
+}
+// Alimento del R24: si la fila no tiene tiempo de comida, copia el de la fila anterior con datos
+function r24Alimento(k, v, escribiendo) {
+  if (!st.p) return;
+  const m = /^(r24|rc)_(\d\d)_/.exec(k) || [], pre = m[1] || "r24", D = datos(), i = +(m[2] || 0), kt = `${pre}_${pad2(i)}_tiempo`;
+  if (!escribiendo && v && vacio(D[kt])) {
+    for (let j = i - 1; j >= 0; j--) { const t = D[`${pre}_${pad2(j)}_tiempo`]; if (!vacio(t)) { D[kt] = t; const sel = document.querySelector(`select[data-k="${kt}"]`); if (sel) sel.value = t; break; } }
+  }
+  asignar(k, v);
+}
+function medInput(el) {
+  if (!st.p) return;
+  const k = el.dataset.med, i = +el.dataset.i, fld = el.dataset.f, D = datos();
+  const filas = Array.isArray(D[k]) ? D[k] : (D[k] = []);
+  const r = filas[i]; if (!r) return;
+  r[fld] = el.value;
+  const src = document.querySelector(`[data-medsrc="${k}_${i}"]`), fin = document.getElementById(`m_${k}_${i}_f`);
+  if (fld === "funcion") { r.fm = el.value.trim() !== ""; fin.classList.remove("func-auto"); src.textContent = r.fm ? "Función escrita a mano" : ""; }
+  if (fld === "nombre" && !r.fm) {
+    const hit = Calc.buscarFuncion(el.value, DIC(CAMPOS[k].cat));
+    r.funcion = hit ? hit.funcion : ""; fin.value = r.funcion; fin.classList.toggle("func-auto", !!hit);
+    fin.placeholder = el.value ? "No está en la lista: escriba la función" : "Función (aparece sola)";
+    src.textContent = hit ? "Función automática ⚠ verificar" : "";
+  }
+  actualizar(); programarGuardado();
+}
+$app.addEventListener("input", (e) => { const el = e.target; if (el.dataset && el.dataset.alim) { comboAbrir(el, false); r24Alimento(el.dataset.k, el.value, true); return; } if (el.dataset && el.dataset.med) { medInput(el); if (el.dataset.f === "nombre") comboAbrir(el, false); return; } if (!el.dataset || !el.dataset.k || el.type === "radio" || el.type === "checkbox") return; asignar(el.dataset.k, leerValor(el, false)); });
+$app.addEventListener("toggle", (e) => { const d = e.target; if (d.matches && d.matches("details.mas")) st.ui.mas[d.dataset.mas] = d.open; }, true);
+$app.addEventListener("change", (e) => {
+  const el = e.target;
+  if (el.id === "chkTodas") { st.ui.todas = el.checked; document.querySelectorAll("details.mas").forEach((d) => { d.open = el.checked; }); return; }
+  if (el.id === "selCtrl") { st.ci = +el.value; vistaFicha(); return; }
+  if (el.id === "impJSON") { importar(el.files[0]); el.value = ""; return; }
+  if (el.dataset && el.dataset.k && (el.type === "radio" || el.type === "checkbox" || el.tagName === "SELECT" || el.type === "date" || el.type === "number")) { const v = leerValor(el, true); asignar(el.dataset.k, v === undefined ? "" : v); }
+});
+// permite desmarcar un Sí/No haciendo clic otra vez
+let radioPrevio = null;
+$app.addEventListener("pointerdown", (e) => { const inp = e.target.closest(".seg label")?.querySelector("input"); radioPrevio = inp && inp.checked ? inp : null; });
+$app.addEventListener("click", async (e) => {
+  const lab = e.target.closest(".seg label");
+  if (lab && radioPrevio && radioPrevio.dataset.k && lab.contains(radioPrevio) && e.target === radioPrevio) { radioPrevio.checked = false; asignar(radioPrevio.dataset.k, ""); radioPrevio = null; return; }
+  const b = e.target.closest("[data-a],[data-mod]"); if (!b) return;
+  if (b.dataset.mod) { st.mod = b.dataset.mod; vistaFicha(); window.scrollTo(0, 0); return; }
+  const a = b.dataset.a;
+  if (a === "nuevo") { const p = crearPaciente(null, null, b.dataset.modo); st.pacientes.push(p); st.p = p; await ejecutarGuardado(); abrir(p); }
+  else if (a === "caso") {
+    const sv = document.getElementById("selCaso").value;
+    if (sv[0] === "f") { const c = CFLASH[+sv.slice(1)], p = crearPaciente(Object.assign({}, c.datos), c.titulo + " (PRUEBA)", "flash"); p.controles[0].datos.nombre = c.titulo.replace(/^Flash · /, "") + " (PRUEBA)";
+      sincronizarMeta(p); st.pacientes.push(p); st.p = p; await ejecutarGuardado(); toast("Caso flash cargado"); abrir(p); return; }
+    const i = +sv, d = {};
+    for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") d[k] = v; }
+    const p = crearPaciente(d, CASOS.nombres[i]); st.pacientes.push(p); st.p = p; await ejecutarGuardado(); toast(`${CASOS.nombres[i]} cargado`); abrir(p);
+  }
+  else if (a === "abrir") { const p = st.pacientes.find((x) => x.id === b.dataset.id); if (p) abrir(p); }
+  else if (a === "borrar") { st.confirmar = b.dataset.id; vistaInicio(); }
+  else if (a === "borrar-no") { st.confirmar = null; vistaInicio(); }
+  else if (a === "borrar-ok") {
+    const id = b.dataset.id;
+    try { await borrarPaciente(id); st.pacientes = st.pacientes.filter((x) => x.id !== id); toast("Paciente eliminado"); }
+    catch (err) { toast("No se pudo eliminar. Intente de nuevo."); }
+    st.confirmar = null; vistaInicio();
+  }
+  else if (a === "volver") { await ejecutarGuardado(); st.p = null; ir("inicio"); }
+  else if (a === "fuente") { st.verFuente = st.verFuente === st.mod ? null : st.mod; const f = document.querySelector(".fuente"); f.hidden = !f.hidden; b.setAttribute("aria-expanded", String(!f.hidden)); }
+  else if (a === "verif") { const v = document.querySelector('[data-out="verif-txt"]'); if (v) v.hidden = !v.hidden; }
+  else if (a === "combo-abrir") { const inp = document.getElementById(b.dataset.for); if (inp) { if (combo && combo.input === inp) comboCerrar(); else { inp.focus(); comboAbrir(inp, true); } } }
+  else if (a === "micro-todos") { st.ui.microTodos = b.checked; actualizar(); }
+  else if (a === "rc-mas") { st.ui.rcn = Math.min(40, r24dNFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "rc-borrar") { const D = datos(), p = `rc_${pad2(+b.dataset.i)}_`; for (const f of ["tiempo", "hora", "prep", "grupo", "alim", "n", "g"]) delete D[p + f]; programarGuardado(); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "copiar-txt") { try { await navigator.clipboard.writeText(b.dataset.txt); toast("Texto copiado"); } catch (err) { toast("No se pudo copiar"); } }
+  else if (a === "dni-editar") { asignar("dni_manual", calc().DNI_Auto); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); const t = document.getElementById("f_dni_manual"); if (t) t.focus(); }
+  else if (a === "obj-usar") { const D = datos(); const i = [1, 2, 3, 4, 5].find((j) => vacio(D["obj_" + j])); if (!i) { toast("Ya hay 5 objetivos: edite o borre uno"); return; } asignar("obj_" + i, b.dataset.txt); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "guardar-paciente") { clearTimeout(tGuardar); await ejecutarGuardado(); toast(/^Guardado/.test($estado.textContent) ? "Paciente guardado" : $estado.textContent); }
+  else if (a === "imprimir-resumen") { prepararImpresion(); setTimeout(() => { window.print(); terminarImpresion(); }, 50); }
+  else if (a === "lab-todos") { st.ui.labTodos = b.checked; const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "r24-borrar") { const D = datos(), p = `r24_${pad2(+b.dataset.i)}_`; for (const f of ["tiempo", "hora", "prep", "alim", "n", "g"]) delete D[p + f]; const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); programarGuardado(); }
+  else if (a === "r24-mas") { st.ui.r24n = Math.min(30, r24NFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
+  else if (a === "modo") { st.p.modo = b.dataset.modo === "flash" ? "flash" : "completa"; const y = window.scrollY; vistaFicha(); window.scrollTo(0, y); programarGuardado(); toast(st.p.modo === "flash" ? "Consulta flash: solo preguntas esenciales" : "Consulta completa: todas las preguntas"); }
+  else if (a === "reloj-play") { const r = relojDe(); if (r.inicio) { r.acum += Date.now() - r.inicio; r.inicio = null; } else r.inicio = Date.now(); st.ui.confirmReloj = false; renderReloj(); programarGuardado(); }
+  else if (a === "reloj-reset") { if (!st.ui.confirmReloj) { st.ui.confirmReloj = true; renderReloj(); return; } const r = relojDe(); r.inicio = null; r.acum = 0; st.ui.confirmReloj = false; renderReloj(); programarGuardado(); }
+  else if (a === "chart" || a === "chartB") { st.ui[a] = b.dataset.ind; actualizar(); }
+  else if (a === "verif-act" || a === "verif-aud") { const v = document.querySelector(`[data-out="${a}"]`); if (v) v.hidden = !v.hidden; }
+  else if (a === "med-agregar") {
+    const k = b.dataset.k, D = datos(); if (!Array.isArray(D[k])) D[k] = [];
+    D[k].push({ nombre: "", dosis: "", funcion: "" }); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y);
+    const inp = document.getElementById(`m_${k}_${D[k].length - 1}_n`); if (inp) inp.focus({ preventScroll: true });
+    programarGuardado();
+  }
+  else if (a === "med-quitar") {
+    const k = b.dataset.k, D = datos(); D[k].splice(+b.dataset.i, 1); if (!D[k].length) delete D[k];
+    const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); programarGuardado();
+  }
+  else if (a === "nuevo-control") {
+    const d = JSON.parse(JSON.stringify(datos())); d.feval = hoy(); delete d.reloj;
+    for (const k of ["z_previo", "pr_fant", "pr_pant", "pr_tant", "pr_pcant"]) delete d[k];
+    for (const k of Object.keys(d)) if (/^(r24_|rc_|tfc_|nc_|obj_|dni_manual|deriv_libre|metas_habitos)/.test(k)) delete d[k]; // la anamnesis alimentaria, el DNI manual y los objetivos son de cada consulta
+    st.p.controles.push({ id: "c" + (st.p.controles.length + 1), datos: d }); st.ci = st.p.controles.length - 1;
+    programarGuardado(); vistaFicha(); toast("Control nuevo creado con los datos del anterior");
+  }
+  else if (a === "exportar") exportar();
+  else if (a === "copiar") { const ta = document.getElementById("txtExport"); try { await navigator.clipboard.writeText(ta.value); toast("JSON copiado"); } catch (err) { ta.select(); } }
+});
+
+// ---------- exportar / importar ----------
+async function exportar() {
+  await ejecutarGuardado();
+  const obj = { formato: "atencion-nutricional-aps", version: 1, exportado: new Date().toISOString(), paciente: st.p };
+  const txt = JSON.stringify(obj, null, 1);
+  const nombre = (st.p.nombre || "paciente").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").slice(0, 60) + ".json";
+  if (Store.dl) {
+    try { await Store.dl.save({ filename: nombre, data: txt }); toast("Archivo guardado"); return; }
+    catch (e) { if (e && e.code === "declined") return; }
+  }
+  const m = document.getElementById("modulo");
+  m.insertAdjacentHTML("afterbegin", `<section class="sec"><h3>Exportar JSON</h3><p class="sec-nota">Esta vista no permite descargar archivos. Copie el texto y guárdelo como <b>${esc(nombre)}</b>.</p>
+    <div style="padding:10px 16px 16px"><textarea class="modal-txt" id="txtExport" readonly>${esc(txt)}</textarea><div class="acciones" style="margin-top:8px"><button class="btn peq" data-a="copiar">Copiar</button></div></div></section>`);
+}
+function importar(file) {
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = async () => {
+    try {
+      const o = JSON.parse(fr.result);
+      const p = o && o.formato === "atencion-nutricional-aps" ? o.paciente : null;
+      if (!p || !Array.isArray(p.controles) || !p.controles.length) throw new Error("formato");
+      if (!/^[A-Za-z0-9_-]{1,80}$/.test(p.id || "") || st.pacientes.some((x) => x.id === p.id)) p.id = nuevoId();
+      st.pacientes.push(p); st.p = p; await ejecutarGuardado(); st.p = null; toast("Paciente importado"); vistaInicio();
+    } catch (e) { toast("El archivo no es un paciente exportado desde esta app."); }
+  };
+  fr.readAsText(file);
+}
+
+// ---------- vista oculta de pruebas (#pruebas) ----------
+async function vistaPruebas() {
+  st.p = null;
+  $app.innerHTML = `<p class="vacio">Cargando pruebas…</p>`;
+  await asegurarCarhe();
+  let P2, P3, PF, PT;
+  try { [P2, P3, PF, PT] = await Promise.all([cargarJSON("data/pruebas2.json"), cargarJSON("data/pruebas3.json"), cargarJSON("data/pruebas_flash.json"), cargarJSON("data/pruebas_tfc.json"), TAB.brk ? Promise.resolve() : cargarJSON("data/brooks.json").then((b) => { TAB.brk = b; })]); }
+  catch (e) { $app.innerHTML = `<p class="vacio">No se pudieron cargar los datos de prueba. Recargue la página.</p>`; return; }
+  const MAP = [["DATOS_PACIENTE!C8", "SexoC"], ["DATOS_PACIENTE!B13", "Edad_Anios"], ["DATOS_PACIENTE!B14", "Edad_MesRest"], ["DATOS_PACIENTE!B15", "Edad_DiaRest"],
+    ["DATOS_PACIENTE!B16", "Edad_Meses"], ["DATOS_PACIENTE!B17", "Edad_Meses_Aprox"], ["DATOS_PACIENTE!B18", "Edad_Dec"], ["DATOS_PACIENTE!B19", "Edad_Texto"],
+    ["DATOS_PACIENTE!B20", "Ciclo_Auto"], ["DATOS_PACIENTE!B22", "Ciclo"], ["DATOS_PACIENTE!B23", "GrupoEtario"], ["DATOS_PACIENTE!C38", "Actividad"],
+    ["DATOS_PACIENTE!C39", "Alim_Lact"], ["DATOS_PACIENTE!C47", "APGAR_Cls"], ["ANAMNESIS_SOCIAL!B71", "Social_Deriv"], ["ANAMNESIS_SOCIAL!D71", "Social_Estado"],
+    ["SEGUIMIENTO!B63", "Audit_C"], ["SEGUIMIENTO!C63", "Audit_C_Cls"], ["SEGUIMIENTO!B64", "Audit_Score"], ["SEGUIMIENTO!B65", "Audit_Riesgo"], ["SEGUIMIENTO!B66", "Audit_Interv"]];
+  let tot = 0, okT = 0, html = "";
+  const fila = (n, e, g, ok) => { tot++; if (ok) okT++; return `<tr><td>${esc(n)}</td><td class="v">${esc(JSON.stringify(e))}</td><td class="v">${esc(JSON.stringify(g))}</td><td class="${ok ? "ok" : "no"}">${ok ? "✔ coincide" : "✘ difiere"}</td></tr>`; };
+  CASOS.nombres.forEach((nm, i) => {
+    const D = {}; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; }
+    const R = Calc.calcular(D), E = ESP.casos[nm], rep = ESP.reporte[nm];
+    let filas = MAP.map(([c, n]) => { const e = E[c] ?? "", g = R[n]; const ok = typeof e === "number" ? Math.abs(e - g) < 1e-9 : e === g; return fila(`${n} (${c})`, e, g, ok); }).join("");
+    filas += fila("Edad (texto del DNI, REPORTE_PRUEBAS)", rep.texto, R.Edad_Texto, rep.texto === R.Edad_Texto);
+    (rep.contiene || []).forEach((s) => { filas += fila(`Alertas contienen «${s}» (REPORTE)`, true, R.Social_Deriv.includes(s), R.Social_Deriv.includes(s)); });
+    if (rep.vacio) filas += fila("Sin alertas sociales (REPORTE: Social_Deriv vacío)", "", R.Social_Deriv, R.Social_Deriv === "");
+    html += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(nm)}</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable (celda)</th><th>Esperado (LibreOffice / Excel)</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></div>`;
+  });
+  let fd = ESP.datedif.map(([a, b, e]) => { const A = Calc.parseFecha(a), B = Calc.parseFecha(b); const g = ["y", "m", "ym", "md"].map((u) => Calc.datedif(A, B, u)); return fila(`DATEDIF ${a} → ${b} (y, m, ym, md)`, e, g, JSON.stringify(e) === JSON.stringify(g)); }).join("");
+  html += `<div class="pr-caso caja" style="padding:14px"><h2>Fechas límite (DATEDIF, comportamiento de Excel)</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Prueba</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${fd}</tbody></table></div></div>`;
+  // reglas del proyecto (sin planilla de referencia)
+  const adol = { sexo: "Femenino", fnac: "2011-03-10", feval: "2026-11-05", px_tca7: "Sí" };
+  const Ra = Calc.calcular(adol), Rg = Calc.calcular({ fnac: "1998-01-01", feval: "2026-11-05", sexo: "Femenino", so_emb: "Sí", so_purita: "No" });
+  const Rm = Calc.calcular({ fnac: "1960-01-01", feval: "2026-11-05", px_farm_si: "Sí", px_mor1: "No", px_mor2: "Sí", px_mor3: "No", px_mor4: "No" });
+  let fr = fila("Adolescente con 1 «Sí» en el tamizaje → alerta de derivación", true, Ra.alertas.some((a) => a.includes("Tamizaje de conducta alimentaria")), Ra.alertas.some((a) => a.includes("Tamizaje de conducta alimentaria")));
+  fr += fila("Mujer embarazada → alerta de Atalah y Purita (texto de la planilla)", "• Gestante: evaluar con la curva de Atalah en el control prenatal; reforzar retiro de Purita Mamá", Rg.alertas[0], Rg.alertas[0] === "• Gestante: evaluar con la curva de Atalah en el control prenatal; reforzar retiro de Purita Mamá");
+  fr += fila("Morisky No / Sí / No / No (con fármacos = Sí) → Adherente", "Adherente", Rm.Morisky, Rm.Morisky === "Adherente");
+  const Rt = Calc.calcular({ fnac: "1950-01-01", feval: "2026-11-05", tabaco: "Sí", px_cig: 35, px_cig_unidad: "A la semana" });
+  fr += fila("Tabaco 35/semana en AM → 5 al día y derivación de SEGUIMIENTO!B78", [5, "• Consejería breve antitabaco y derivación a sala IRA (Clase 8 p. 20)"], [Rt.Cig_Dia, Rt.Deriv_Tabaco], Rt.Cig_Dia === 5 && Rt.Deriv_Tabaco === "• Consejería breve antitabaco y derivación a sala IRA (Clase 8 p. 20)");
+  const Rx = Calc.calcular({ fnac: "1980-01-01", feval: "2026-11-05", sexo: "Masculino", alcohol: "No", audit_01: 4, audit_02: 4, audit_03: 4 });
+  fr += fila("Alcohol = No: el AUDIT no se considera", "Sin aplicar", Rx.Audit_Riesgo, Rx.Audit_Riesgo === "Sin aplicar");
+  const h = Calc.buscarFuncion("losartan 50 mg c/12 h", MED.farmacos);
+  fr += fila("Función por nombre: «losartan 50 mg c/12 h»", "Losartán", h && h.nombre, !!h && h.nombre === "Losartán");
+  html += `<div class="pr-caso caja" style="padding:14px"><h2>Agregados del portafolio y reglas del proyecto</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Prueba</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${fr}</tbody></table></div></div>`;
+  // ----- etapa 2: escenarios recalculados en LibreOffice -----
+  const get = (o, p) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o);
+  const igual = (e, g) => { if (e == null) e = ""; if (g == null) g = ""; if (typeof e === "number") return typeof g === "number" && Math.abs(e - g) < 1e-6 * Math.max(1, Math.abs(e)); return e === g; };
+  const NOMBRES = { caso1: "Caso 1 – NNA", caso2: "Caso 2 – Adulto", caso3: "Caso 3 – AM", prem_clase: "Prematuro: ejercicio de la clase (33 sem, 1.650 g, 14 días)",
+    prem_ec: "Prematuro: edad corregida (30 sem, 1.200 g, 179 días)", pc_v: "Parálisis cerebral GMFCS V con sonda (Planilla_NNA)", pc_iii_sin_talla: "Parálisis cerebral GMFCS III sin talla (Planilla_NNA)",
+    ad_edema: "Adulta con ascitis y edema, pliegues y pérdida de peso", am_rodilla: "Adulto mayor con talla por altura de rodilla", lactante_pt: "Lactante de 7 meses con P/T ≥ +1 DE", talla_baja: "Preescolar con talla baja" };
+  let h2 = "", tot2 = 0, ok2 = 0;
+  for (const [nm, sc] of Object.entries(P2)) {
+    let D = {};
+    if (sc.entrada.__caso) { const i = CASOS.nombres.indexOf(sc.entrada.__caso); for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } }
+    else D = Object.assign({}, sc.entrada);
+    const R = Calc.calcular(D, { T: TAB });
+    let n = 0, okn = 0, filas = "", malas = "";
+    for (const [cell, path0, e] of sc.checks) {
+      let path = path0;
+      if (path.startsWith("!nna:")) { path = path.slice(5); if (R.Ciclo !== "NNA") continue; }
+      if (sc.wb === "N" && cell === "EVAL_ANTROPOMETRICA!B44") continue;
+      let g; if (path.startsWith("!r1:")) { path = path.slice(4); g = get(R, path); if (typeof g === "number") g = Math.round(g * 10) / 10; } else g = get(R, path);
+      const ok = igual(e, g); n++; if (ok) okn++;
+      const tr = `<tr><td>${esc(cell)}</td><td class="v">${esc(JSON.stringify(e ?? ""))}</td><td class="v">${esc(JSON.stringify(g ?? ""))}</td><td class="${ok ? "ok" : "no"}">${ok ? "✔" : "✘"}</td></tr>`;
+      filas += tr; if (!ok) malas += tr;
+    }
+    tot2 += n; ok2 += okn;
+    h2 += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(NOMBRES[nm] || nm)} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2>
+      ${malas ? `<div class="tabla-w"><table class="pr"><tbody>${malas}</tbody></table></div>` : ""}
+      <details><summary>Ver todas las celdas comparadas (${sc.wb === "N" ? "Planilla_NNA" : "Planilla_Nutricional"})</summary><div class="tabla-w"><table class="pr"><thead><tr><th>Celda</th><th>LibreOffice</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></details></div>`;
+  }
+  // valores del REPORTE_PRUEBAS (Excel) redondeados como en el reporte
+  const REP2 = { "Caso 1 – NNA": [["IMC", "IMC", 22.49], ["EA_Z_IMC", "EA_Z_IMC", 2.80], ["EA_Z_TE", "EA_Z_TE", 0.17], ["Calificacion_Nutricional", "Calificacion_Nutricional", "Obesidad"], ["Dx_Talla", "Dx_Talla", "Talla normal"],
+      ["Riesgo_CC", "Riesgo_CC", "Obesidad abdominal"], ["Peso_Ideal", "Peso_Ideal", 26.70], ["Peso_Max", "Peso_Max", 29.60], ["ICT_Cls", "ICT_Cls", "Adiposidad central aumentada"], ["Z_Tray", "Z_Tray", "Trayectoria estable"],
+      ["CMB", "CMB", 183.45], ["AMB", "AMB", 2678.13], ["AGB", "AGB", 1905.53], ["Comp_Musc", "Comp_Musc", "Elevado"], ["Comp_Graso", "Comp_Graso", "Elevado"], ["Edad_Meses_Aprox", "Edad_Meses_Aprox", 100]],
+    "Caso 2 – Adulto": [["IMC", "IMC", 35.25], ["Calificacion_Nutricional", "Calificacion_Nutricional", "Obesidad grado II"], ["Riesgo_CC", "Riesgo_CC", "Obesidad abdominal"], ["Peso_Ideal", "Peso_Ideal", 54.20],
+      ["Peso_Ajustado", "Peso_Ajustado", 62.70], ["CMB", "CMB", 259.47], ["AMB", "AMB", 5357.49], ["AGB", "AGB", 4955.75], ["Comp_Musc", "Comp_Musc", "Normal"], ["Comp_Graso", "Comp_Graso", "Normal"],
+      ["GC_Pct", "GC_Pct", 43.90], ["GC_Cls", "GC_Cls", "Obeso (> 33 %)"], ["Contextura", "Contextura", "Mediana"]],
+    "Caso 3 – AM": [["IMC", "IMC", 19.49], ["Calificacion_Nutricional", "Calificacion_Nutricional", "Bajo peso"], ["Riesgo_CC", "Riesgo_CC", "Normal"], ["Peso_Ideal", "Peso_Ideal", 72.00],
+      ["CMB", "CMB", 214.87], ["AMB", "AMB", 3673.93], ["AGB", "AGB", 909.73], ["Comp_Musc", "Comp_Musc", "Disminuido"], ["Comp_Graso", "Comp_Graso", "Normal"], ["Contextura", "Contextura", "Grande"]] };
+  let hr = "";
+  for (const [nm, arr] of Object.entries(REP2)) {
+    const i = CASOS.nombres.indexOf(nm), D = {}; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; }
+    const R = Calc.calcular(D, { T: TAB });
+    hr += arr.map(([lab, path, e]) => { let g = get(R, path); if (typeof e === "number" && typeof g === "number") g = Math.round(g * 100) / 100; return fila(`${nm} · ${lab}`, e, g, igual(e, g)); }).join("");
+  }
+  html += `<div class="pr-caso caja" style="padding:14px"><h2>Etapa 2 · valores del REPORTE_PRUEBAS (Excel, 2 decimales)</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${hr}</tbody></table></div></div>`;
+  html += `<h2 style="font-size:17px;margin:22px 0 10px">Etapa 2 · ${ok2} de ${tot2} celdas coinciden con LibreOffice</h2>` + h2;
+  tot += tot2; okT += ok2;
+  // ----- etapa 3: requerimientos -----
+  const REP3 = { "Caso 1 – NNA": [["Peso_Usado", 29.60], ["GET_Final", 1662], ["Kcal_Kg_Ref", 58.65], ["Prot_g", 83.10], ["Lip_g", 55.40], ["CHO_g", 207.80], ["VHT", 2812], ["Rec_Calcio", 1000], ["Rec_VitD", 15], ["K_AI", 2300], ["Na_AI", 1000],
+      ["Det24_Kcal", 239.00], ["Det24_Prot", 13.88], ["Det24_Calcio", 36.00], ["Det24_Hierro", 5.15], ["Det24_Sodio", 4.25], ["Det24_Fibra", 14.85], ["NC_Ingesta_Calcio", 36.00], ["NC_Ingesta_Hierro", 5.15],
+      ["DNI_Alim", ", con exceso alimentario (exceso de lípidos, hidratos de carbono)"]],
+    "Caso 2 – Adulto": [["Peso_Usado", 62.70], ["Formula_Usada", "Factorial kcal/kg × peso (AD/AM, predeterminado)"], ["GET_Calc", 1568], ["GET_Final", 1568], ["Kcal_Kg_Real", 17.82], ["Prot_g", 75.20], ["Lip_g", 52.30],
+      ["CHO_g", 199.20], ["VHT", 1568], ["Control_Met", "DM2 descompensada"], ["Nom_Kcal", "Hipocalórico"], ["Prot_Nom", "Hiperproteico"], ["CHO_Nom", "Normoglucídico"], ["Rec_Calcio", 1200], ["Rec_VitD", 15], ["K_AI", 2600], ["Na_AI", 1500],
+      ["DNI_Alim", ", con exceso alimentario (exceso de lípidos, hidratos de carbono; insuficiencia de proteínas)"]],
+    "Caso 3 – AM": [["Peso_Usado", 55], ["GET_Final", 1650], ["Kcal_Kg_Real", 30], ["Prot_g", 82.50], ["Lip_g", 55], ["CHO_g", 206.30], ["VHT", 1650], ["Nom_Kcal", "Normocalórico"], ["Prot_Nom", "Hiperproteico"],
+      ["Rec_Calcio", 1200], ["Rec_VitD", 20], ["K_AI", 3400], ["Na_AI", 1500],
+      ["Det24_Kcal", 656.02], ["Det24_Prot", 51.07], ["Det24_Calcio", 369.68], ["Det24_Hierro", 5.35], ["Det24_Sodio", 796.22], ["Det24_Fibra", 6.11], ["NC_Ingesta_Calcio", 369.68], ["NC_Ingesta_Hierro", 5.35],
+      ["DNI_Alim", ", con insuficiencia alimentaria (insuficiencia de lípidos)"]] };
+  // etapa 6: DNI y prescripción, palabra por palabra (REPORTE_PRUEBAS, Excel)
+  REP3["Caso 1 – NNA"].push(["DNI", "Escolar, género masculino de 8 años, 4 meses y 12 días, con obesidad según IMC/E, talla normal según T/E, con compartimento muscular y graso elevado, con obesidad abdominal (CC ≥ p90), con exceso alimentario (exceso de lípidos, hidratos de carbono), con actividad física ligera. Con presión arterial elevada, adiposidad central aumentada según índice cintura/talla, exámenes sugerentes de resistencia a la insulina y dislipidemia."],
+    ["PD_Texto_Planilla", "Régimen de consistencia normal, digestibilidad común, normocalórico (1662 kcal/día), hiperproteico (83 g), con selección de CHO complejos y fibra, alto en calcio, bajo en sodio, restringido en sacarosa, volúmenes normales, horario normal con 2 colaciones."]);
+  REP3["Caso 2 – Adulto"].push(["DNI", "Adulto, género femenino de 52 años, 7 meses y 17 días, con obesidad grado II según IMC, con composición muscular y grasa normales según Frisancho 1981, con obesidad abdominal (CC 104 cm), con riesgo cardiovascular alto, con exceso alimentario (exceso de lípidos, hidratos de carbono; insuficiencia de proteínas), con actividad física moderada. Con diabetes mellitus tipo 2 descompensada, dislipidemia, pre-hipertensión y síndrome metabólico."],
+    ["PD_Texto_Planilla", "Régimen de consistencia normal, digestibilidad común, hipocalórico (1568 kcal/día), hiperproteico (75 g), con selección de AGMI y AGPI, con selección de CHO complejos y fibra, restringido en sacarosa, volúmenes normales, horario normal con 2 colaciones."]);
+  REP3["Caso 3 – AM"].push(["DNI", "Adulto mayor, género masculino de 76 años, 5 meses y 7 días, con bajo peso según IMC y desnutrición proteica visceral leve según albúmina (desnutrición mixta), con composición muscular disminuida y grasa normal según Frisancho 1981, con riesgo cardiovascular moderado según Framingham, con insuficiencia alimentaria (insuficiencia de lípidos), con actividad física ligera. Con hipertensión arterial no compensada, riesgo de malnutrición según MNA-SF, dependencia leve según Barthel, sospecha de depresión leve según Yesavage, riesgo de caída, fuerza de prensión disminuida, velocidad de marcha baja, bajo rendimiento físico según SPPB, exámenes sugerentes de anemia y perímetro de pantorrilla bajo (< 31 cm)."],
+    ["PD_Texto_Planilla", "Régimen de consistencia normal, digestibilidad común, normocalórico (1650 kcal/día), hiperproteico (83 g), alto en hierro, calcio, bajo en sodio, volúmenes normales, horario normal con 2 colaciones."]);
+  let hr3 = "";
+  for (const [nm, arr] of Object.entries(REP3)) {
+    const i = CASOS.nombres.indexOf(nm), D = {}; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; }
+    const R = Calc.calcular(D, { T: TAB });
+    arr.push(["Rec24_Kcal = intercambio + detallado", 1]);
+    R["Rec24_Kcal = intercambio + detallado"] = Math.abs(R.Rec24_Kcal - (R.R24.int.kcal + R.Det24_Kcal)) < 1e-9 ? 1 : 0;
+    // el REPORTE trae valores mostrados con 2 decimales: se acepta la diferencia de redondeo (± 0,005)
+    hr3 += arr.map(([path, e]) => { const g0 = get(R, path); const ok = typeof e === "number" && typeof g0 === "number" ? Math.abs(e - g0) <= 0.00501 : igual(e, g0); const g = typeof g0 === "number" ? Math.round(g0 * 1000) / 1000 : g0; return fila(`${nm} · ${path}`, e, g, ok); }).join("");
+  }
+  html += `<div class="pr-caso caja" style="padding:14px"><h2>Etapas 3 a 6 · valores del REPORTE_PRUEBAS (Excel, 2 decimales; CHO_g del caso 3 = valor de Excel 206,3; DNI y prescripción palabra por palabra; la PD se compara en su versión de planilla, porque la app agrega siempre proteínas, lípidos y CHO por decisión docente)</h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${hr3}</tbody></table></div></div>`;
+  const NOM3 = { caso1: "Caso 1 – NNA", caso2: "Caso 2 – Adulto", caso3: "Caso 3 – AM", lact_fl: "Lactante de 4 meses con fórmula láctea", lact_mixta: "Lactante de 9 meses con alimentación mixta",
+    r24_bordes: "R24 de bordes: gramos, «Otro» con porciones y con gramos, filas incompletas, decimales y R24 detallado (CARHE)", adol_manual: "Adolescente con ajustes manuales (Schofield P-T, hipoproteico, 35 % lípidos, CHO según control, ingesta manual)", ad_erc: "Adulto con ERC G3b, factor patológico, FAO/OMS y ajuste −200 kcal",
+    am_manual: "Adulta mayor con peso ideal, 32 kcal/kg y 1,4 g/kg manual", ad_edema: "Adulta con ascitis y edema (peso seco)", talla_baja: "Preescolar con talla baja (peso ideal para la talla)",
+    pc_v: "Parálisis cerebral GMFCS V con meta de recuperación (Krick, Planilla_NNA)", pc_culley: "Parálisis cerebral GMFCS I que deambula (Culley, Planilla_NNA)" };
+  let h3 = "", tot3 = 0, ok3 = 0;
+  const igual3 = (e, g) => igual(e, g) || (typeof e === "string" && typeof g === "string" && g.replace(/(\d),(\d)/g, "$1.$2") === e);
+  for (const [nm, sc] of Object.entries(P3)) {
+    let D = {};
+    if (sc.entrada.__caso) { const i = { "Caso 1 – NNA": 0, "Caso 2 – Adulto": 1, "Caso 3 – AM": 2 }[sc.entrada.__caso]; for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } }
+    for (const [k, v] of Object.entries(sc.entrada)) if (!k.startsWith("__")) D[k] = v;
+    const R = Calc.calcular(D, { T: TAB });
+    let n = 0, okn = 0, filas = "", malas = "";
+    for (const [cell, path, e] of sc.checks) {
+      const g = path.startsWith("!star:") ? (get(R, path.slice(6)) ? "★" : "") : get(R, path);
+      const ok = igual3(e, g); n++; if (ok) okn++;
+      const tr = `<tr><td>${esc(cell)}</td><td class="v">${esc(JSON.stringify(e ?? ""))}</td><td class="v">${esc(JSON.stringify(g ?? ""))}</td><td class="${ok ? "ok" : "no"}">${ok ? "✔" : "✘"}</td></tr>`;
+      filas += tr; if (!ok) malas += tr;
+    }
+    const om = Object.entries(sc.omitidos || {});
+    const omTxt = om.length ? `<p class="sec-nota">${om.length} celda${om.length === 1 ? "" : "s"} sin comparar: ${esc([...new Set(om.map(([, r]) => r))].join("; "))}.</p>` : "";
+    tot3 += n; ok3 += okn;
+    h3 += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(NOM3[nm] || nm)} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2>${omTxt}
+      ${malas ? `<div class="tabla-w"><table class="pr"><tbody>${malas}</tbody></table></div>` : ""}
+      <details><summary>Ver todas las celdas comparadas (${sc.wb === "N" ? "Planilla_NNA" : "Planilla_Nutricional"})</summary><div class="tabla-w"><table class="pr"><thead><tr><th>Celda</th><th>LibreOffice</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></details></div>`;
+  }
+  html += `<h2 style="font-size:17px;margin:22px 0 10px">Etapas 3 a 6 · ${ok3} de ${tot3} celdas coinciden con LibreOffice</h2><p class="sec-nota" style="padding:0 0 10px">REQ_ENERGIA, MACRONUTRIENTES, NUTRIENTES_CRITICOS, HIDRATACION, R24, R24_DETALLADO LABORATORIO, PRESION_ARTERIAL, RIESGO_CV, FUNCIONALIDAD_AM, DNI, PRESCRIPCION y SEGUIMIENTO. Las filas vacías del R24 no se comparan.</p>` + h3;
+  tot += tot3; okT += ok3;
+  // ----- casos de la consulta flash: cálculos (etapas 1-3) y que cada dato ingresado se pregunte en modo flash -----
+  const dondeSe = (k) => { const r = []; for (const [mod, secs] of Object.entries(ESQ.secciones.general)) for (const s of secs) if ((s.c || []).includes(k) || (s.aj || []).includes(k) || (s.tabla === "micro" && /^nc_/.test(k)) || (s.tabla === "r24" && /^r24_\d\d_(tiempo|alim|n|g)$/.test(k)) || (s.tabla === "lab" && /^lab_/.test(k)) || (s.tabla === "pauta" && /^pd_por_/.test(k)) || (s.tabla === "dist" && /^pd_dist_/.test(k)) || (s.tabla === "vac" && /^vac_/.test(k)) || (s.tabla === "prev" && /^prev_/.test(k))) r.push([mod, s]); return r; };
+  const visibleFlash = (k, R, D) => dondeSe(k).some(([mod, s]) => {
+    if (/\(opcional\)/.test(s.t) || s.soloCompleta || !esEsencial(k)) return false;
+    if (mod === "funcam" && R.Ciclo !== "AM") return false;
+    if (mod === "prematuro" && !(R.Ciclo === "NNA" && R.PR && R.PR.Es === "Sí")) return false;
+    if (s.cuando !== "todos" && !(condSec[s.cuando](R) && !(R.Embarazada && OCULTAR_EMB.has(s.cuando)))) return false;
+    return condCampo[k] ? condCampo[k](R, D) : true; });
+  let hf = "", totF = 0, okF = 0;
+  for (const [nm, sc] of Object.entries(PF)) {
+    const D = Object.assign({}, sc.entrada), R = Calc.calcular(D, { T: TAB });
+    let n = 0, okn = 0, malas = "", filas = "";
+    const add = (cell, e, g, ok) => { n++; if (ok) okn++; const tr = `<tr><td>${esc(cell)}</td><td class="v">${esc(JSON.stringify(e ?? ""))}</td><td class="v">${esc(JSON.stringify(g ?? ""))}</td><td class="${ok ? "ok" : "no"}">${ok ? "✔" : "✘"}</td></tr>`; filas += tr; if (!ok) malas += tr; };
+    for (const k of Object.keys(sc.entrada)) { const vis = visibleFlash(k, R, D); add(`Se pregunta en flash: ${CAMPOS[k] ? CAMPOS[k].label : k}`, true, vis, vis); }
+    for (const [cell, p0, e] of sc.checks) {
+      let p = p0, g;
+      if (p.startsWith("!nna:")) { p = p.slice(5); if (R.Ciclo !== "NNA") continue; }
+      if (p.startsWith("!star:")) g = get(R, p.slice(6)) ? "★" : ""; else if (p.startsWith("!r1:")) { g = get(R, p.slice(4)); if (typeof g === "number") g = Math.round(g * 10) / 10; } else g = get(R, p);
+      add(cell, e, g, igual3(e, g));
+    }
+    totF += n; okF += okn;
+    hf += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(sc.titulo)} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2>
+      <p class="sec-nota">Datos ingresados: ${esc(Object.keys(sc.entrada).filter((k) => !["fnac", "feval"].includes(k)).map((k) => (CAMPOS[k] ? CAMPOS[k].label : k) + " = " + sc.entrada[k]).join(" · "))}</p>
+      ${sc.peso_real ? '<p class="sec-nota">Peso para requerimientos = peso real (decisión de la usuaria: en NNA con desnutrición, riesgo de desnutrir o estado normal se usa el peso real; sobrepeso y obesidad usan el peso máximo aceptable y la talla baja el peso ideal para la talla). A la planilla se le indicó «Actual» para comparar el resto; la celda PesoTipo_Auto se compara con la regla original de la planilla.</p>' : ""}
+      ${nm === "f_prematuro" ? '<p class="sec-nota">El DNI del prematuro incluye «PEG» porque la app clasifica P/EG con Alarcón-Pittaluga (decisión de la etapa 2); la planilla lo deja vacío si no se elige.</p>' : ""}
+      ${malas ? `<div class="tabla-w"><table class="pr"><tbody>${malas}</tbody></table></div>` : ""}
+      <details><summary>Ver todas las comparaciones (${sc.wb === "N" ? "Planilla_NNA" : "Planilla_Nutricional"})</summary><div class="tabla-w"><table class="pr"><thead><tr><th>Celda o prueba</th><th>LibreOffice</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></details></div>`;
+  }
+  html = `<h2 style="font-size:17px;margin:4px 0 10px">Consulta flash · ${okF} de ${totF} comparaciones coinciden</h2>
+    <p class="sec-nota" style="padding:0 0 10px">${Object.keys(PF).length} casos ficticios con solo preguntas esenciales. Se revisa que cada dato se pregunte en modo flash y que los cálculos de las etapas 1 a 3 coincidan con la planilla recalculada en LibreOffice. Decisión docente aplicada también en la planilla de comparación: factor de actividad 1,4 / 1,7 / 2,0 en todas las edades (en vez de la tabla PAL OMS).</p>` + hf + html;
+  tot += totF; okT += okF;
+  // ----- etapa 8: TFC (LibreOffice) -----
+  let ht = "", totT = 0, okTT = 0;
+  for (const [nm, sc] of Object.entries(PT)) {
+    let D = {};
+    if (sc.entrada.__caso) { const i = CASOS.nombres.indexOf(sc.entrada.__caso); for (const k in CASOS.valores) { const v = CASOS.valores[k][i]; if (v !== null && v !== "") D[k] = v; } } else D = Object.assign({}, sc.entrada);
+    const R = Calc.calcular(D, { T: TAB }); let n = 0, okn = 0, malas = "";
+    for (const [cell, p, e0] of sc.checks) { const e = e0 === null ? "" : e0, g = get(R, p); const ok = typeof e === "number" && typeof g === "number" ? Math.abs(e - g) < 1e-9 : String(e) === String(g ?? ""); n++; if (ok) { okn++; tot++; okT++; } else malas += fila(cell, e, g, ok); }
+    totT += n; okTT += okn;
+    ht += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(NOM3[nm] || nm)} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2>${malas ? `<div class="tabla-w"><table class="pr"><tbody>${malas}</tbody></table></div>` : ""}</div>`;
+  }
+  html += `<h2 style="font-size:17px;margin:22px 0 10px">Etapa 8 · TFC · ${okTT} de ${totT} celdas coinciden con LibreOffice</h2>` + ht;
+  // ----- etapa 7: gestante y nodriza (valores calculados a mano, paso a paso; casos aprobados por la usuaria 07-11-2026) -----
+  const EG = {
+    g1: [["Estado nutricional pregestacional", "GES.enPre", "Normal"], ["IMC pregestacional", "GES.imcPre", 22.66, 0.01], ["Atalah (25 SG, IMC 24,2)", "GES.atalah", "Normal"],
+      ["Incremento semanal (g/sem) = 4 / 14", "GES.incSemG", 285.7, 0.05], ["Clasificación del incremento (330-430)", "GES.incCls", "Insuficiente"],
+      ["Paso 2 · ganancia lograda (kg)", "GES.ganancia", 4], ["Paso 3 · kg faltantes = 13 − 4", "GES.faltan", 9], ["Paso 4 · kcal totales = 9 × 7.000", "GES.kcalTot", 63000],
+      ["Paso 5 · semanas faltantes = 40 − 25", "GES.semFaltan", 15], ["Paso 6 · kcal/semana", "GES.kcalSem", 4200], ["Paso 7 · kcal extra/día", "GES.extra", 600],
+      ["Peso ideal = 21,7 × 1,60²", "Peso_Usado", 55.6], ["GEB × 1,4 = (14,818 × 55,6 + 486,6) × 1,4", "GES.gebPal", 1835], ["GET = 1.835 + 600", "GET_Final", 2435],
+      ["Proteínas = 55,6 × 1,0 × 1,2 + 25", "Prot_g", 91.7], ["Lípidos (30 %)", "Lip_g", 81.2], ["Próximo control (28 SG)", "Prox_Control", "2026-11-27"],
+      ["DNI", "DNI", "Gestante de 25 SG (25 años), sin patologías de base, con un estado nutricional pregestacional normal (MINSAL 2018) y actual normal (Atalah 2020), con un incremento de peso insuficiente para la SG."]],
+    g2: [["Estado nutricional pregestacional (IMC 25,8)", "GES.enPre", "Sobrepeso"], ["Atalah (28 SG, IMC 30,0)", "GES.atalah", "Sobrepeso"], ["Incremento semanal (g/sem) = 10 / 17", "GES.incSemG", 588.2, 0.05],
+      ["Clasificación del incremento (230-330)", "GES.incCls", "Excesivo"], ["Kcal extra (sobrepeso: no aplica)", "GES.extra", 0], ["Embarazo múltiple ≥ 20 SG: + kcal", "GES.multKcal", 1000],
+      ["Peso ideal = 21,7 × 1,55²", "Peso_Usado", 52.1], ["GEB tramo 18-30 (16 años) × 1,4", "GES.gebPal", 1762], ["GET = 1.762 + 1.000", "GET_Final", 2762],
+      ["Proteínas = 52,1 × 1,2 + 25 + 50", "Prot_g", 137.5], ["Hb 10,5 (< 11): ODIN", "Lab_ODIN", "sugerente de anemia"],
+      ["DNI", "DNI", "Gestante de 28 SG (16 años), con embarazo múltiple, sin patologías de base, con un estado nutricional pregestacional sobrepeso (MINSAL 2018) y actual sobrepeso (Atalah 2020), con un incremento de peso excesivo para la SG. Con exámenes sugerentes de anemia."]],
+    n1: [["Nodriza", "Nodriza", true], ["Peso usado (normal: actual)", "Peso_Usado", 64], ["GEB tramo 30-60 × 1,4 = (8,126 × 64 + 845,6) × 1,4", "GES.gebPal", 1912], ["GET = 1.912 + 500", "GET_Final", 2412],
+      ["Proteínas = 64 × 1,0 × 1,2 + 15", "Prot_g", 91.8], ["Hierro (Tabla 3, lactancia)", "!nc:Hierro", 9]] };
+  let hg = "", totG = 0, okG = 0;
+  for (const c of CFLASH.filter((x) => EG[x.id])) {
+    const D = Object.assign({}, c.datos), R = Calc.calcular(D, { T: TAB });
+    let n = 0, okn = 0, filas = "";
+    for (const k of Object.keys(c.datos)) { const vis = visibleFlash(k, R, D); n++; if (vis) okn++; filas += fila("Se pregunta en flash: " + (CAMPOS[k] ? CAMPOS[k].label : k), true, vis, vis); }
+    for (const [lbl, p, e, tol] of EG[c.id]) {
+      const g = p.startsWith("!nc:") ? (R.NC.find((o) => o.n === p.slice(4)) || {}).rec : get(R, p);
+      const ok = typeof e === "number" && typeof g === "number" ? Math.abs(e - g) <= (tol || 1e-9) : igual(e, g);
+      n++; if (ok) okn++; filas += fila(lbl, e, typeof g === "number" ? Math.round(g * 100) / 100 : g, ok);
+    }
+    totG += n; okG += okn;
+    hg += `<div class="pr-caso caja" style="padding:14px"><h2>${esc(c.titulo.replace(/^Flash · /, ""))} <span class="estado ${okn === n ? "normal" : "alterado"}">${okn} de ${n}</span></h2><div class="tabla-w"><table class="pr"><thead><tr><th>Variable</th><th>Esperado (a mano)</th><th>App</th><th></th></tr></thead><tbody>${filas}</tbody></table></div></div>`;
+  }
+  html += `<h2 style="font-size:17px;margin:22px 0 10px">Etapa 7 · gestante y nodriza · ${okG} de ${totG} comprobaciones</h2><p class="sec-nota" style="padding:0 0 10px">Sin planilla de referencia: los valores esperados se calcularon a mano con las reglas docentes (Guía Perinatal 2015, método de kcal extra, peso ideal IMC 21,7, nodriza + 500 kcal). También se revisa que cada dato se pregunte en modo flash.</p>` + hg;
+  $app.innerHTML = `<div class="inicio-h"><div><h1>Pruebas · etapas 1 a 8</h1><p>Referencia: Planilla_Nutricional.xlsx y Planilla_NNA.xlsx recalculadas en LibreOffice (3 casos de la planilla, 7 casos de consulta flash y 17 escenarios), y REPORTE_PRUEBAS.md (Excel).</p></div>
+    <button class="btn" data-a="volver">← Pacientes</button></div>
+    <div class="resumen-pr"><span class="estado ${okT === tot ? "normal" : "alterado"}">${okT} de ${tot} comparaciones coinciden</span></div>${html}`;
+}
+
+// ---------- arranque ----------
+await iniciarStore();
+try { st.pacientes = await listarPacientes(); st.pacientes.forEach(migrar); }
+catch (e) { st.pacientes = []; $estado.textContent = "No se pudo leer la lista de pacientes. Recargue la página."; }
+if (location.hash === "#ficha") history.replaceState(null, "", "#inicio");
+ruta();
+})();
+</script>
