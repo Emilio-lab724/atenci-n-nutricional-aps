@@ -86,7 +86,7 @@ table.pac tr.fila:hover td { background: var(--surface-2); }
 .ficha-h .ctrl { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
 .ficha-h select { padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); }
 .grid { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; gap: 18px; align-items: start; }
-nav.mods { position: sticky; top: 112px; display: flex; flex-direction: column; gap: 1px; }
+nav.mods { position: sticky; top: calc(var(--top-h, 100px) + var(--reloj-h, 0px) + 8px); display: flex; flex-direction: column; gap: 1px; }
 nav.mods .grupo { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 12px 10px 4px; }
 nav.mods button { text-align: left; border: 0; background: none; padding: 6px 10px; border-radius: var(--r); cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 nav.mods button:hover:not([disabled]) { background: var(--surface-2); }
@@ -295,6 +295,13 @@ details.ajustes > .campos { padding-top: 4px; }
 details.mas > .campos { padding-top: 4px; }
 .mod-h .todas { margin-left: auto; font-size: 13px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 /* cronómetro */
+.fecha { position: relative; display: flex; align-items: stretch; gap: 0; max-width: 220px; }
+.fecha input[type=text] { flex: 1; min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.fecha input.invalido { border-color: #c0392b; background: #fff5f4; }
+.fecha .cal { border: 1px solid var(--line); border-left: none; background: var(--surface); color: var(--muted); padding: 0 10px; border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center; }
+.fecha .cal:hover { color: var(--accent); }
+.fecha .cal-nat { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.reloj { position: sticky; top: var(--top-h, 100px); z-index: 4; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
 .reloj { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: -4px 0 14px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 .reloj-izq { display: flex; align-items: center; gap: 8px; }
 .reloj-t { font-size: 18px; font-weight: 600; min-width: 62px; }
@@ -336,7 +343,7 @@ ul.vac li.toca em { color: var(--ok); } ul.vac li.prox { opacity: .75; } ul.vac 
 .tanner-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
 
 /* panel lateral */
-aside.panel { position: sticky; top: 112px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+aside.panel { position: sticky; top: calc(var(--top-h, 100px) + var(--reloj-h, 0px) + 8px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
 aside.panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 12px 14px 4px; }
 .kv { display: flex; flex-direction: column; padding: 4px 14px 12px; }
 .kv > div { display: flex; flex-direction: column; gap: 1px; padding: 7px 0; border-bottom: 1px solid var(--line); }
@@ -420,8 +427,11 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "16";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-07.1";
+const APP_VERSION = "2026-11-08.1";
 const CAMBIOS = [
+  { v: "2026-11-08.1", fecha: "08-11-2026", items: [
+    "Fechas en formato chileno dd-mm-aaaa en cualquier navegador (antes Chrome en inglés mostraba mm/dd/aaaa). Escriba solo los números, por ejemplo 05032015, y los guiones se agregan solos; también puede usar el botón de calendario.",
+    "El cronómetro de la consulta queda fijo arriba mientras baja por la página."] },
   { v: "2026-11-07.1", fecha: "07-11-2026", items: [
     "Anamnesis social: al elegir «¿Con quién vive?» se pueden registrar los integrantes del hogar con su parentesco y edad.",
     "La pregunta de lactancia ya no aparece en la anamnesis: ahora está en Datos del paciente y solo se muestra si la paciente no está embarazada.",
@@ -771,11 +781,19 @@ function vistaFicha() {
 }
 // ---------- cronómetro de la consulta (pauta sugerida de 45 minutos) ----------
 const PAUTA = [["Anamnesis", 15], ["Antropometría", 10], ["Anamnesis alimentaria", 15], ["Cierre (DNI, PD, educación)", 5]];
+// Alturas de la barra superior y del cronómetro (ambos quedan fijos al bajar por la página)
+function medirFijos() {
+  const h = document.querySelector("header.top"), r = document.getElementById("reloj"), st2 = document.documentElement.style;
+  st2.setProperty("--top-h", (h ? h.offsetHeight : 0) + "px"); st2.setProperty("--reloj-h", (r && r.offsetParent ? r.offsetHeight + 8 : 0) + "px");
+}
+try { const ro = new ResizeObserver(medirFijos); ro.observe(document.querySelector("header.top")); setTimeout(() => { const r = document.getElementById("reloj"); if (r) ro.observe(r); }, 0); } catch (e) { /* navegador antiguo */ }
+window.addEventListener("resize", medirFijos);
 const relojDe = () => { const c = ctrl(); if (!c.reloj) c.reloj = { inicio: null, acum: 0 }; return c.reloj; };
 const transcurrido = () => { const r = relojDe(); return r.acum + (r.inicio ? Date.now() - r.inicio : 0); };
 const mmss = (ms) => { const t = Math.floor(ms / 1000); return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); };
 function renderReloj() {
   const $r = document.getElementById("reloj"); if (!$r || !st.p) return;
+  if ($r.dataset.medido !== "1") { $r.dataset.medido = "1"; medirFijos(); try { new ResizeObserver(medirFijos).observe($r); } catch (e) { /* sin ResizeObserver */ } }
   const r = relojDe(), ms = transcurrido(), min = ms / 60000, total = 45;
   let acc = 0, actual = PAUTA.length - 1;
   for (let i = 0; i < PAUTA.length; i++) { if (min < acc + PAUTA[i][1]) { actual = i; break; } acc += PAUTA[i][1]; }
@@ -826,7 +844,7 @@ function campoHTML(k) {
   } else if (f.type === "number") {
     ctl = `<input type="number" inputmode="decimal" id="${id}" data-k="${k}" min="${f.min}" max="${f.max}" step="any" value="${vacio(v) ? "" : esc(v)}"><span class="err" hidden></span>`;
   } else if (f.type === "date") {
-    ctl = `<input type="date" id="${id}" data-k="${k}" value="${esc(v || "")}">`;
+    ctl = fechaHTML(id, k, v, f.label);
   } else if (f.type === "multi") {
     const sel = Array.isArray(v) ? v : [];
     ancho = true;
@@ -996,7 +1014,7 @@ function prevTablaHTML() {
   const D = datos();
   return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res"><thead><tr><th>Examen</th><th>Fecha del último</th><th>Estado</th><th>Vence</th></tr></thead><tbody>
     ${Array.from({ length: 10 }, (_, i) => { const k = "prev_" + pad2(i);
-      return `<tr data-prev="${i}"><td>${esc(CAMPOS[k].label.replace(": fecha del último", ""))}</td><td><input type="date" data-k="${k}" value="${esc(D[k] || "")}" aria-label="${esc(CAMPOS[k].label)}"></td><td data-out="prev-e-${i}"></td><td data-out="prev-v-${i}"></td></tr>`; }).join("")}</tbody></table></div>`;
+      return `<tr data-prev="${i}"><td>${esc(CAMPOS[k].label.replace(": fecha del último", ""))}</td><td>${fechaHTML("f_" + k, k, D[k], CAMPOS[k].label)}</td><td data-out="prev-e-${i}"></td><td data-out="prev-v-${i}"></td></tr>`; }).join("")}</tbody></table></div>`;
 }
 function cierreSalidas(R, out) {
   const $m = document.getElementById("modulo");
@@ -1326,14 +1344,41 @@ function leerValor(el, mostrarErr) {
     caja.classList.remove("invalido"); err.hidden = true; return n;
   }
   if (f.type === "date") {
-    // Mientras se escribe el año (2, 20, 202…) el navegador entrega fechas como 0002-05-10: se ignoran hasta tener un año completo
-    if (el.value === "") return "";
-    const y = +el.value.slice(0, 4);
-    return y >= 1900 && y <= 2100 ? el.value : undefined;
+    // Fecha escrita como dd-mm-aaaa (formato chileno, igual en cualquier navegador); se guarda como aaaa-mm-dd
+    const t = el.value.trim();
+    if (t === "") { el.classList.remove("invalido"); return ""; }
+    const iso = clAIso(t);
+    if (!iso) { if (mostrarErr && t.length >= 8) el.classList.add("invalido"); return undefined; }
+    el.classList.remove("invalido"); return iso;
   }
   if (f.type === "tanner") return el.value;
   if (f.type === "scored") return el.value === "" ? "" : Number(el.value);
   return el.value;
+}
+// ---------- fechas dd-mm-aaaa ----------
+function isoACl(v) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || ""); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; }
+function clAIso(t) {
+  const m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(String(t).trim()); if (!m) return "";
+  const d = +m[1], mo = +m[2], y = +m[3];
+  if (y < 1900 || y > 2100 || mo < 1 || mo > 12 || d < 1) return "";
+  if (d > new Date(y, mo, 0).getDate()) return "";
+  return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+function fechaHTML(id, k, v, label) {
+  return `<span class="fecha"><input type="text" id="${id}" data-k="${k}" data-fecha="1" inputmode="numeric" placeholder="dd-mm-aaaa" maxlength="10" autocomplete="off" value="${esc(isoACl(v))}" aria-label="${esc(label || k)} (dd-mm-aaaa)">`
+    + `<button type="button" class="cal" data-a="cal" data-for="${id}" tabindex="-1" aria-label="Elegir en el calendario" title="Elegir en el calendario"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="1.5" y="3" width="13" height="11.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.3"/></svg></button>`
+    + `<input type="date" class="cal-nat" data-cal-for="${id}" tabindex="-1" aria-hidden="true" value="${esc(v || "")}"></span>`;
+}
+// Máscara: solo números; agrega los guiones solos (12082010 → 12-08-2010)
+function mascaraFecha(el) {
+  const raw = el.value, seg = raw.split(/[-\/.\s]/).map((x) => x.replace(/\D/g, ""));
+  let dig;
+  if (seg.length > 1 && seg.slice(0, -1).every((x) => x.length <= 2)) dig = seg.slice(0, -1).map((x, i) => (i < 2 && x.length === 1 ? "0" + x : x)).join("") + seg[seg.length - 1];
+  else dig = raw.replace(/\D/g, "");
+  dig = dig.slice(0, 8);
+  let t = dig.slice(0, 2); if (dig.length > 2) t += "-" + dig.slice(2, 4); if (dig.length > 4) t += "-" + dig.slice(4);
+  if (/[-\/.\s]$/.test(raw) && (dig.length === 2 || dig.length === 4)) t += "-";
+  if (t !== raw) el.value = t;
 }
 function asignar(k, v) {
   if (!st.p) return;
@@ -1426,13 +1471,15 @@ function medInput(el) {
   }
   actualizar(); programarGuardado();
 }
-$app.addEventListener("input", (e) => { const el = e.target; if (el.dataset && el.dataset.alim) { comboAbrir(el, false); r24Alimento(el.dataset.k, el.value, true); return; } if (el.dataset && el.dataset.med) { medInput(el); if (el.dataset.f === "nombre") comboAbrir(el, false); return; } if (!el.dataset || !el.dataset.k || el.type === "radio" || el.type === "checkbox") return; asignar(el.dataset.k, leerValor(el, false)); });
+$app.addEventListener("input", (e) => { const el = e.target; if (el.dataset && el.dataset.fecha && e.inputType !== "deleteContentBackward") mascaraFecha(el); if (el.dataset && el.dataset.alim) { comboAbrir(el, false); r24Alimento(el.dataset.k, el.value, true); return; } if (el.dataset && el.dataset.med) { medInput(el); if (el.dataset.f === "nombre") comboAbrir(el, false); return; } if (!el.dataset || !el.dataset.k || el.type === "radio" || el.type === "checkbox") return; asignar(el.dataset.k, leerValor(el, false)); });
 $app.addEventListener("toggle", (e) => { const d = e.target; if (d.matches && d.matches("details.mas")) st.ui.mas[d.dataset.mas] = d.open; }, true);
 $app.addEventListener("change", (e) => {
   const el = e.target;
   if (el.id === "chkTodas") { st.ui.todas = el.checked; document.querySelectorAll("details.mas").forEach((d) => { d.open = el.checked; }); return; }
   if (el.id === "selCtrl") { st.ci = +el.value; vistaFicha(); return; }
   if (el.id === "impJSON") { importar(el.files[0]); el.value = ""; return; }
+  if (el.classList && el.classList.contains("cal-nat")) { const t = document.getElementById(el.dataset.calFor); if (t && el.value) { t.value = isoACl(el.value); t.classList.remove("invalido"); asignar(t.dataset.k, el.value); } return; }
+  if (el.dataset && el.dataset.fecha) { const v = leerValor(el, true); if (v !== undefined) asignar(el.dataset.k, v); return; }
   if (el.dataset && el.dataset.k && (el.type === "radio" || el.type === "checkbox" || el.tagName === "SELECT" || el.type === "date" || el.type === "number")) { const v = leerValor(el, true); asignar(el.dataset.k, v === undefined ? "" : v); }
 });
 // permite desmarcar un Sí/No haciendo clic otra vez
@@ -1474,6 +1521,7 @@ $app.addEventListener("click", async (e) => {
   else if (a === "verif") { const v = document.querySelector('[data-out="verif-txt"]'); if (v) v.hidden = !v.hidden; }
   else if (a === "combo-abrir") { const inp = document.getElementById(b.dataset.for); if (inp) { if (combo && combo.input === inp) comboCerrar(); else { inp.focus(); comboAbrir(inp, true); } } }
   else if (a === "micro-todos") { st.ui.microTodos = b.checked; actualizar(); }
+  else if (a === "cal") { const t = document.getElementById(b.dataset.for), n = b.parentElement.querySelector(".cal-nat"); if (n) { n.value = t ? clAIso(t.value) : ""; try { n.showPicker(); } catch (err) { n.focus(); n.click(); } } }
   else if (a === "fam-mas") { st.ui.famn = Math.min(12, document.querySelectorAll("table.fam tbody tr").length + 1); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "fam-borrar") { const D = datos(), p = `fam_${pad2(+b.dataset.i)}_`; delete D[p + "par"]; delete D[p + "edad"]; programarGuardado(); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "rc-mas") { st.ui.rcn = Math.min(40, r24dNFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
