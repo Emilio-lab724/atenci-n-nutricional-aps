@@ -1,3 +1,4 @@
+/* Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. */
 /* Etapa 2 — bloques de resultados y curvas de crecimiento.
    Cada renderer recibe ctx = { R, D, T, ESQ, hist, ui } y devuelve HTML. */
 (function (root) {

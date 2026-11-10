@@ -1,3 +1,4 @@
+/* Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. */
 /* Etapa 5 — bloques de laboratorio, presión arterial, riesgo cardiovascular y funcionalidad del adulto mayor. Se registran en Etapa2.live. */
 (function (root) {
   "use strict";

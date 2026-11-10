@@ -1,3 +1,11 @@
+<!doctype html>
+<!-- Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. -->
+<html lang="es">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Emilio Alejandro Espinoza Sotomayor">
+<meta name="copyright" content="© 2026 Emilio Alejandro Espinoza Sotomayor. Todos los derechos reservados.">
+<meta name="theme-color" content="#0d5a5e">
 <meta charset="utf-8">
 <title>Atención Nutricional APS</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -247,6 +255,10 @@ table.hr td.txt { line-height: 1.4; } table.hr ol { margin: 0; padding-left: 18p
   #printHost .hoja { margin: 0; border: none; padding: 0; font-size: 10.5px; }
   #printHost table.hr th, #printHost table.hr td { font-size: 9.6px; padding: 2px 5px; }
   #printHost .firma { margin-top: 10px; }
+  #printHost .hoja + .hoja { break-before: page; page-break-before: always; }
+  #printHost .hoja-pauta table.hr th, #printHost .hoja-pauta table.hr td { font-size: 9.6px; padding: 2.5px 5px; }
+  #printHost .hoja-pauta .pauta-pd, #printHost .hoja-pauta .sec-nota { font-size: 9.6px; margin-top: 6px; }
+  #printHost .autoria { font-size: 7.5px; margin-top: 8px; }
 }
 /* etapa 5: laboratorio */
 table.labt tr.grupo-f td { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
@@ -386,8 +398,70 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
   .calc { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
   .calc dd { margin-bottom: 8px; }
 }
+/* autoría, opciones del resumen */
+.pie-autor { max-width: 1440px; margin: 0 auto; padding: 4px 16px 28px; color: var(--muted); font-size: 11.5px; line-height: 1.45; text-align: center; }
+.autoria { margin: 10px 0 0; font-size: 9.5px; color: #666; line-height: 1.35; }
+.res-ops { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; padding: 12px 16px 2px; font-size: 14px; }
+.res-ops > span { color: var(--muted); }
+.res-ops label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.hoja-pauta .pauta-pd { font-size: 12px; margin: 10px 0 0; line-height: 1.45; }
+.hoja-pauta td.num { text-align: center; }
+/* teléfono */
+.nav-movil, .panel-tog { display: none; }
+@media (max-width: 760px) {
+  body { -webkit-text-size-adjust: 100%; }
+  .top { position: static; }
+  .top-in { padding-block: 6px; gap: 2px 10px; }
+  .top-in .top-esp { display: none; }
+  .guardado { font-size: 11.5px; flex: 1 1 auto; }
+  .novedades-btn { margin-left: 0; }
+  .aviso { font-size: 11.5px; padding-block: 4px; }
+  .actualizar { font-size: 13px; padding: 6px 12px; }
+  .wrap { padding-block: 12px 28px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  input, select, textarea { font-size: 16px !important; max-width: 100%; }
+  .acciones select, .acciones .btn, .acciones label.btn { max-width: 100%; }
+  .acciones > label, .acciones > span { min-width: 0; }
+  #selCaso { min-width: 0; width: 100%; flex: 1 1 100%; }
+  .ficha-h { gap: 8px 10px; margin-bottom: 10px; }
+  .ficha-h h1 { font-size: 18px; flex: 1 1 60%; }
+  .ficha-h .top-esp { display: none; }
+  .reloj { top: 0; margin: 0 -12px 10px; border-radius: 0; border-inline: 0; padding: 6px 12px; gap: 6px 10px; }
+  .reloj-barra { flex: 1 1 100%; height: 16px; order: 3; }
+  .reloj-barra .seg-r span { display: none; }
+  .reloj-nota { margin-left: auto; }
+  .reloj-t { font-size: 17px; min-width: 56px; }
+  nav.mods { display: none; }
+  .nav-movil { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .nav-movil label { font-size: 13px; color: var(--muted); }
+  .nav-movil select { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); font-weight: 600; }
+  .panel-tog { display: flex; width: 100%; gap: 8px; align-items: center; margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); font: inherit; font-size: 13px; color: var(--muted); text-align: left; cursor: pointer; }
+  .panel-tog .pt-res { flex: 1; min-width: 0; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel-tog[aria-expanded="true"] .pt-fl { transform: rotate(180deg); }
+  aside.panel { display: none; }
+  aside.panel.abierto { display: block; }
+  aside.panel .kv { flex-direction: column; }
+  aside.panel .kv > div { border-bottom: 1px solid var(--line); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 12px; }
+  .campos { padding: 12px; }
+  .seg { flex-wrap: wrap; }
+  .tabla-w { -webkit-overflow-scrolling: touch; padding-inline: 10px !important; }
+  .tabla-w table { min-width: 460px; }
+  .hoja { margin: 10px 8px 12px; padding: 12px 10px; overflow-x: auto; }
+  .hoja table.hr { min-width: 520px; }
+  .bloom { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 10px 12px; }
+  ol.pasos { margin-inline: 12px; } ol.pasos li { grid-template-columns: 22px 1fr; } ol.pasos li b { grid-column: 2; }
+  .pager .btn { flex: 1 1 100%; text-align: center; }
+  .modal-fondo .modal { padding: 16px; }
+  .fecha { max-width: 100%; }
+  .toast { left: 12px; right: 12px; text-align: center; }
+  .pie-autor { font-size: 10.5px; padding-inline: 12px; }
+}
+@media print { .pie-autor, .res-ops, .nav-movil, .panel-tog { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+</head>
+<body>
+
 
 <header class="top">
   <div class="top-in">
@@ -403,15 +477,16 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 <div class="wrap" id="app">
   <p class="vacio">Cargando…</p>
 </div>
+<footer class="pie-autor" id="pieAutor"></footer>
 
 <script src="calc.js?v=19"></script>
 <script src="etapa2.js?v=11"></script>
 <script src="etapa3.js?v=5"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=1"></script>
-<script src="etapa6.js?v=7"></script>
+<script src="etapa6.js?v=8"></script>
 <script src="etapa7.js?v=2"></script>
-<script src="excel.js?v=2"></script>
+<script src="excel.js?v=3"></script>
 <script>
 "use strict";
 (async function () {
@@ -425,10 +500,19 @@ function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return
 function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ---------- datos ----------
-const VERSION_DATOS = "16";
+const VERSION_DATOS = "17";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-08.1";
+const APP_VERSION = "2026-11-10.1";
+// Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
+const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
+window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.1", fecha: "10-11-2026", items: [
+    "Anamnesis clínica: nueva sección de controles y exámenes preventivos al día (EMP, EMPAM, PAP, mamografía, etc.) desde los 15 años, también en la consulta flash. Solo aparecen los que corresponden por edad y sexo.",
+    "Pauta de porciones: el grupo de carnes bajas en grasa indica que incluye el huevo, y hay una hoja imprimible con las porciones al día, ejemplos de medidas caseras y la distribución por tiempo de comida.",
+    "Resumen: se puede elegir si incluir «Seguimiento y derivaciones» y si adjuntar la pauta de porciones como hoja aparte.",
+    "La app se adapta al teléfono: menú desplegable de páginas, resultados clave plegables y tablas que se deslizan.",
+    "Se agregó la autoría y el aviso de derechos reservados."] },
   { v: "2026-11-08.1", fecha: "08-11-2026", items: [
     "Fechas en formato chileno dd-mm-aaaa en cualquier navegador (antes Chrome en inglés mostraba mm/dd/aaaa). Escriba solo los números, por ejemplo 05032015, y los guiones se agregan solos; también puede usar el botón de calendario.",
     "El cronómetro de la consulta queda fijo arriba mientras baja por la página."] },
@@ -572,6 +656,7 @@ const condSec = {
   adolescente: (R) => R.GrupoEtario === "Adolescente",
   pc_activa: (R) => !!(R.PC && R.PC.activa),
   no_lactante: (R) => !esLactante(R),
+  prev15: (R) => typeof R.Edad_Anios === "number" && R.Edad_Anios >= 15,
   familia: () => { const v = st.p ? datos().so_vive : ""; return !vacio(v) && v !== "Solo/a" && !/^Institución/.test(v); },
 };
 const esLactante = (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 24;
@@ -747,6 +832,17 @@ function navHTML(R) {
 }
 const opsCtrlHTML = () => st.p.controles.map((c, i) => `<option value="${i}" ${i === st.ci ? "selected" : ""}>Control ${i + 1} · ${fechaCL(c.datos.feval)}</option>`).join("");
 // Actualiza menú, etiqueta de gestante y lista de controles sin redibujar el formulario (no interrumpe lo que se está escribiendo)
+// Selector de páginas para teléfono (reemplaza al menú lateral en pantallas angostas)
+function syncNavSel() {
+  const $s = document.getElementById("navSel"); if (!$s || !st.p) return;
+  const R = calc(), lista = navDe(R); let h = "", abierto = false;
+  for (const m of lista) {
+    if (m.g) { if (abierto) h += "</optgroup>"; h += `<optgroup label="${esc(m.g)}">`; abierto = true; continue; }
+    if (!m.id || !modsVisibles(R).some((x) => x.id === m.id)) continue;
+    h += `<option value="${m.id}" ${m.id === st.mod ? "selected" : ""}>${esc(m.t)}</option>`;
+  }
+  $s.innerHTML = h + (abierto ? "</optgroup>" : "");
+}
 function refrescarNav() {
   const R = calc(), modAntes = st.mod;
   const $n = document.querySelector("nav.mods"); if ($n) $n.innerHTML = navHTML(R);
@@ -754,6 +850,7 @@ function refrescarNav() {
   const $c = document.getElementById("selCtrl"); if ($c) $c.innerHTML = opsCtrlHTML();
   if (st.mod !== modAntes) renderModulo();
   else { const $pg = document.getElementById("pager"); if ($pg) $pg.innerHTML = pagerHTML(R); }
+  syncNavSel();
 }
 function vistaFicha() {
   const p = st.p, R = calc();
@@ -772,10 +869,12 @@ function vistaFicha() {
       <button class="btn peq" data-a="exportar">Exportar Excel</button>
     </div>
     <div class="reloj" id="reloj" aria-label="Cronómetro de la consulta"></div>
+    <div class="nav-movil"><label for="navSel">Página</label><select id="navSel" aria-label="Ir a la página"></select></div>
+    <button type="button" class="panel-tog" data-a="panel-tog" aria-expanded="${st.ui.panelAbierto ? "true" : "false"}"><span>Resultados clave</span><span class="pt-res" id="ptRes"></span><span class="pt-fl" aria-hidden="true">▾</span></button>
     <div class="grid">
       <nav class="mods" aria-label="Módulos">${nav}</nav>
       <main class="modulo" id="modulo"></main>
-      <aside class="panel" id="panel" aria-label="Resultados clave"></aside>
+      <aside class="panel ${st.ui.panelAbierto ? "abierto" : ""}" id="panel" aria-label="Resultados clave"></aside>
     </div>`;
   renderModulo(); actualizar(); renderReloj();
 }
@@ -903,6 +1002,7 @@ function tannerHTML(k) {
 
 function renderModulo() {
   const p = st.p, mod = st.mod, R = calc();
+  syncNavSel();
   const secs = ESQ.secciones.general[mod] || [];
   const titulo = navDe(R).find((m) => m.id === mod).t;
   const fkey = mod;
@@ -979,10 +1079,13 @@ function labSalidas(R, out) {
   }
 }
 // impresión de la ficha resumen: se copia a un contenedor de primer nivel para que salga en una sola hoja carta
-function prepararImpresion() {
-  const h = document.getElementById("hojaResumen"); if (!h) return;
+function prepararImpresion(soloPauta) {
   let host = document.getElementById("printHost"); if (!host) { host = document.createElement("div"); host.id = "printHost"; document.body.appendChild(host); }
-  host.innerHTML = h.outerHTML.replace('id="hojaResumen"', 'id="hojaPrint"'); document.body.classList.add("imprimiendo");
+  let html = "";
+  if (soloPauta) html = Etapa6.pautaHoja({ R: calc(), D: datos(), T: TAB });
+  else { const h = document.getElementById("hojaResumen"), pa = document.getElementById("hojaPauta"); if (!h) return false; html = h.outerHTML.replace('id="hojaResumen"', 'id="hojaPrint"') + (pa ? pa.outerHTML.replace('id="hojaPauta"', 'id="hojaPautaPrint"') : ""); }
+  if (!html) return false;
+  host.innerHTML = html; document.body.classList.add("imprimiendo"); return true;
 }
 window.prepararImpresion = prepararImpresion;
 function terminarImpresion() { document.body.classList.remove("imprimiendo"); const host = document.getElementById("printHost"); if (host) host.innerHTML = ""; }
@@ -991,10 +1094,11 @@ const inNum = (k, v, min, max, w) => `<span class="campo mini" data-campo="${k}"
 function pautaTablaHTML() {
   const D = datos(), R = calc(), g = R.PD.grupos;
   return `<div class="tabla-w" style="padding:10px 16px 6px"><table class="pr res pauta"><thead><tr><th>Grupo</th><th>Sugerido</th><th>Manual</th><th>Usado</th><th>kcal</th><th>Prot (g)</th><th>Lip (g)</th><th>CHO (g)</th></tr></thead><tbody>
-    ${g.map((x, i) => `<tr><td data-out="pa-n-${i}">${esc(x.grupo)}</td><td class="num" data-out="pa-s-${i}"></td><td>${inNum("pd_por_" + i, D["pd_por_" + i], 0, 30, 58)}</td><td class="num" data-out="pa-u-${i}"></td><td class="num" data-out="pa-k-${i}"></td><td class="num" data-out="pa-p-${i}"></td><td class="num" data-out="pa-l-${i}"></td><td class="num" data-out="pa-c-${i}"></td></tr>`).join("")}</tbody>
+    ${g.map((x, i) => `<tr><td data-out="pa-n-${i}">${esc(Etapa6.nombreGrupo(x.grupo, TAB.t4.med))}</td><td class="num" data-out="pa-s-${i}"></td><td>${inNum("pd_por_" + i, D["pd_por_" + i], 0, 30, 58)}</td><td class="num" data-out="pa-u-${i}"></td><td class="num" data-out="pa-k-${i}"></td><td class="num" data-out="pa-p-${i}"></td><td class="num" data-out="pa-l-${i}"></td><td class="num" data-out="pa-c-${i}"></td></tr>`).join("")}</tbody>
     <tfoot><tr class="total"><td colspan="4">Total pauta</td><td class="num" data-out="pa-tk"></td><td class="num" data-out="pa-tp"></td><td class="num" data-out="pa-tl"></td><td class="num" data-out="pa-tc"></td></tr>
     <tr><td colspan="4">Requerimiento</td><td class="num" data-out="pa-rk"></td><td class="num" data-out="pa-rp"></td><td class="num" data-out="pa-rl"></td><td class="num" data-out="pa-rc"></td></tr>
-    <tr><td colspan="4">% de adecuación (90-110 %)</td><td data-out="pa-ak"></td><td data-out="pa-ap"></td><td data-out="pa-al"></td><td data-out="pa-ac"></td></tr></tfoot></table></div>`;
+    <tr><td colspan="4">% de adecuación (90-110 %)</td><td data-out="pa-ak"></td><td data-out="pa-ap"></td><td data-out="pa-al"></td><td data-out="pa-ac"></td></tr></tfoot></table></div>
+    <p class="sec-nota"><button class="btn peq" data-a="imprimir-pauta">Imprimir pauta de porciones (hoja para el paciente)</button> Lista las porciones al día con ejemplos de medidas caseras. También se puede adjuntar al resumen.</p>`;
 }
 function distTablaHTML() {
   const D = datos(), T6 = Calc.TIEMPOS;
@@ -1023,7 +1127,7 @@ function cierreSalidas(R, out) {
   const fe = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || "")); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; };
   const P = R.PD;
   if (P && $m.querySelector("table.pauta")) {
-    P.grupos.forEach((x, i) => { out("pa-n-" + i, esc(x.grupo)); out("pa-s-" + i, n(x.sug)); out("pa-u-" + i, "<b>" + n(x.usado) + "</b>"); out("pa-k-" + i, n(x.kcal, 0)); out("pa-p-" + i, n(x.prot)); out("pa-l-" + i, n(x.lip)); out("pa-c-" + i, n(x.cho)); });
+    P.grupos.forEach((x, i) => { out("pa-n-" + i, esc(Etapa6.nombreGrupo(x.grupo, TAB.t4.med))); out("pa-s-" + i, n(x.sug)); out("pa-u-" + i, "<b>" + n(x.usado) + "</b>"); out("pa-k-" + i, n(x.kcal, 0)); out("pa-p-" + i, n(x.prot)); out("pa-l-" + i, n(x.lip)); out("pa-c-" + i, n(x.cho)); });
     out("pa-tk", n(P.tot.kcal, 0)); out("pa-tp", n(P.tot.prot)); out("pa-tl", n(P.tot.lip)); out("pa-tc", n(P.tot.cho));
     out("pa-rk", n(P.req.kcal, 0)); out("pa-rp", n(P.req.prot)); out("pa-rl", n(P.req.lip)); out("pa-rc", n(P.req.cho));
     for (const [k, c] of [["kcal", "k"], ["prot", "p"], ["lip", "l"], ["cho", "c"]]) out("pa-a" + c, (typeof P.adec[k] === "number" ? n(P.adec[k], 0) + " % " : "— ") + ok(P.ok[k]));
@@ -1259,7 +1363,7 @@ function actualizar() {
   if (R.R24D && R.R24D.pendiente) asegurarCarhe();
   if ($m.querySelector("tr[data-r24]") && R.R24) r24Salidas(R, out);
   if ($m.querySelector("tr[data-lab]") && R.LAB) labSalidas(R, out);
-  if (["pd", "seg"].includes(st.mod)) cierreSalidas(R, out);
+  if (["pd", "seg", "clinica"].includes(st.mod)) cierreSalidas(R, out);
   if ($m.querySelector("table.r24d")) r24dSalidas(R, out);
   if ($m.querySelector("table.tfc")) tfcSalidas(R, out);
   if ($m.querySelector("tr[data-nc]") && R.NC) {
@@ -1302,6 +1406,7 @@ function renderPanel(R) {
   const pend = (e) => `<b class="pend">Etapa ${e}</b>`;
   const g = false; // etapa 7: la gestante ya tiene todos sus cálculos
   const G = R.GES || {};
+  const $pt = document.getElementById("ptRes"); if ($pt) $pt.textContent = [R.Calificacion_Nutricional && !/Falta|Ingrese/.test(R.Calificacion_Nutricional) ? R.Calificacion_Nutricional : "", typeof R.GET_Final === "number" ? Math.round(R.GET_Final).toLocaleString("es-CL") + " kcal" : ""].filter(Boolean).join(" · ");
   $p.innerHTML = `<h2>Resultados clave</h2><div class="kv">
     <div><span>Edad</span><b>${esc(R.Edad_Texto || "—")}</b></div>
     <div><span>Ciclo vital · grupo etario</span><b>${esc(R.Ciclo || "—")}${R.GrupoEtario ? " · " + esc(R.GrupoEtario) : ""}</b></div>
@@ -1477,6 +1582,7 @@ $app.addEventListener("change", (e) => {
   const el = e.target;
   if (el.id === "chkTodas") { st.ui.todas = el.checked; document.querySelectorAll("details.mas").forEach((d) => { d.open = el.checked; }); return; }
   if (el.id === "selCtrl") { st.ci = +el.value; vistaFicha(); return; }
+  if (el.id === "navSel") { const b = document.querySelector(`nav.mods [data-mod="${el.value}"]`); if (b) b.click(); return; }
   if (el.id === "impJSON") { importar(el.files[0]); el.value = ""; return; }
   if (el.classList && el.classList.contains("cal-nat")) { const t = document.getElementById(el.dataset.calFor); if (t && el.value) { t.value = isoACl(el.value); t.classList.remove("invalido"); asignar(t.dataset.k, el.value); } return; }
   if (el.dataset && el.dataset.fecha) { const v = leerValor(el, true); if (v !== undefined) asignar(el.dataset.k, v); return; }
@@ -1530,7 +1636,10 @@ $app.addEventListener("click", async (e) => {
   else if (a === "dni-editar") { asignar("dni_manual", calc().DNI_Auto); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); const t = document.getElementById("f_dni_manual"); if (t) t.focus(); }
   else if (a === "obj-usar") { const D = datos(); const i = [1, 2, 3, 4, 5].find((j) => vacio(D["obj_" + j])); if (!i) { toast("Ya hay 5 objetivos: edite o borre uno"); return; } asignar("obj_" + i, b.dataset.txt); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "guardar-paciente") { clearTimeout(tGuardar); await ejecutarGuardado(); toast(/^Guardado/.test($estado.textContent) ? "Paciente guardado" : $estado.textContent); }
-  else if (a === "imprimir-resumen") { prepararImpresion(); setTimeout(() => { window.print(); terminarImpresion(); }, 50); }
+  else if (a === "imprimir-resumen") { if (prepararImpresion(false)) setTimeout(() => { window.print(); terminarImpresion(); }, 50); }
+  else if (a === "imprimir-pauta") { if (prepararImpresion(true)) setTimeout(() => { window.print(); terminarImpresion(); }, 50); else toast("La pauta necesita el requerimiento de energía (peso, talla y actividad física)."); }
+  else if (a === "panel-tog") { st.ui.panelAbierto = !st.ui.panelAbierto; const pa = document.getElementById("panel"); if (pa) pa.classList.toggle("abierto", st.ui.panelAbierto); b.setAttribute("aria-expanded", st.ui.panelAbierto ? "true" : "false"); }
+  else if (a === "res-op") { asignar(b.dataset.op, b.checked ? "Sí" : "No"); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "lab-todos") { st.ui.labTodos = b.checked; const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "r24-borrar") { const D = datos(), p = `r24_${pad2(+b.dataset.i)}_`; for (const f of ["tiempo", "hora", "prep", "alim", "n", "g"]) delete D[p + f]; const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); programarGuardado(); }
   else if (a === "r24-mas") { st.ui.r24n = Math.min(30, r24NFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
@@ -1850,6 +1959,7 @@ async function vistaPruebas() {
 await iniciarStore();
 try { st.pacientes = await listarPacientes(); st.pacientes.forEach(migrar); }
 catch (e) { st.pacientes = []; $estado.textContent = "No se pudo leer la lista de pacientes. Recargue la página."; }
+document.getElementById("pieAutor").textContent = AUTORIA;
 if (location.hash === "#ficha") history.replaceState(null, "", "#inicio");
 ruta();
 if (location.hash !== "#pruebas") mostrarNovedades(false);
@@ -1858,3 +1968,6 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) revi
 revisarActualizacion();
 })();
 </script>
+
+</body>
+</html>

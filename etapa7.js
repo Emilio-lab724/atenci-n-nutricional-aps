@@ -1,3 +1,4 @@
+/* Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. */
 /* Etapa 7 — gestante y nodriza: evaluación gestacional (IMC pregestacional, Atalah, incremento de peso), kcal extra paso a paso,
    requerimientos de gestante/nodriza y clínica de lactancia. Se registran en Etapa2.live. */
 (function (root) {

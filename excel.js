@@ -1,3 +1,4 @@
+/* Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. */
 /* Exportar / importar pacientes en Excel (.xlsx) con SheetJS.
    Formato (un solo formato para 1 paciente o para el respaldo de todos):
    - Hoja «Resumen»: resultados principales de cada control (solo lectura; no se usa al importar).
@@ -63,6 +64,7 @@
           n(R.GET_Final, 0), n(R.Prot_g, 1), n(R.Lip_g, 1), n(R.CHO_g, 1), R.DNI || "", R.PD_Texto || "", R.Prox_Control || ""]);
       });
     }
+    if (root.AUTORIA) { info.push([]); info.push(["Atención Nutricional APS · " + root.AUTORIA]); }
     const wb = XLSX.utils.book_new();
     const hoja = (aoa, anchos) => { const ws = XLSX.utils.aoa_to_sheet(aoa); ws["!cols"] = anchos.map((w) => ({ wch: w })); ws["!autofilter"] = { ref: ws["!ref"] }; return ws; };
     XLSX.utils.book_append_sheet(wb, hoja(resumen, [24, 12, 9, 14, 26, 9, 9, 9, 7, 22, 12, 11, 10, 10, 70, 70, 14]), "Resumen");

@@ -1,3 +1,4 @@
+/* Atención Nutricional APS — © 2026 Emilio Alejandro Espinoza Sotomayor, estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia. Todos los derechos reservados. Prohibida su reproducción, distribución o modificación sin autorización escrita del autor. */
 /* Etapa 6 — cierre: DNI, prescripción dietética, objetivos (Bloom), seguimiento y ficha resumen. Se registran en Etapa2.live. */
 (function (root) {
   "use strict";
@@ -95,7 +96,50 @@
     return l.length ? `<ul class="deriv">${l.map((x) => `<li>${esc(x.replace(/^• /, ""))}</li>`).join("")}</ul>` : nota("Sin derivaciones automáticas."); };
 
   // ---------------- Ficha resumen (1 hoja carta) ----------------
-  L.resumen = ({ R, D, ui }) => {
+  // ---------- Pauta de porciones de intercambio (hoja para adjuntar al resumen o entregar al paciente) ----------
+  const PREF = { "Cereales, papas y leguminosas frescas": /^(Marraqueta|Pan integral|Arroz \(cocido\)|Fideos \(cocidos\)|Papa cocida|Avena)/, "Verduras en general": /^(Tomate|Zanahoria cruda|Betarraga|Coliflor|Porotos verdes|Zapallo)/,
+    "Frutas": /^(Manzana|Naranja|Plátano|Pera|Frutillas|Uvas)/, "Carnes bajas en grasa": /^(Huevo|Pollo|Vacuno magro|Pescado blanco|Atún en agua|Pavo)/, "Carnes altas en grasa": /^(Vacuno graso|Cerdo|Salmón|Carne molida|Atún en aceite)/ };
+  const ejemplos = (grupo, med) => {
+    const todos = (med || []).filter((m) => m[1] === grupo && !/^Otro –/.test(m[0]));
+    const pref = PREF[grupo] ? todos.filter((m) => PREF[grupo].test(m[0])) : [];
+    const lista = (pref.length ? pref : todos).slice().sort((x, y) => (/^Huevo/.test(y[0]) ? 1 : 0) - (/^Huevo/.test(x[0]) ? 1 : 0)).slice(0, 6);
+    return lista.map((m) => m[0] + ": " + m[2]).join(" · ");
+  };
+  const conHuevo = (grupo, med) => (med || []).some((m) => m[1] === grupo && /^Huevo/.test(m[0]));
+  const nombreGrupo = (grupo, med) => grupo + (conHuevo(grupo, med) ? " (incluye huevo)" : "");
+  function pautaHoja({ R, D, T }) {
+    const P = R.PD, med = T && T.t4 ? T.t4.med : [];
+    if (!P || !isNum(R.GET_Final)) return "";
+    const TI = (root.Calc && root.Calc.TIEMPOS) || [], g = P.grupos.map((x, i) => Object.assign({ i }, x)).filter((x) => isNum(x.usado) && x.usado > 0);
+    if (!g.length) return "";
+    const tUsados = TI.map((t, k) => k).filter((k) => P.tiempos.some((r) => r.fila[k] > 0));
+    return `<div id="hojaPauta" class="hoja hoja-pauta">
+      <h2>Pauta de alimentación · porciones de intercambio</h2>
+      <p class="hoja-aviso">Herramienta académica de práctica</p>
+      <table class="hr"><tbody>
+        <tr><th>Nombre</th><td>${esc(D.nombre || "")}</td><th>Fecha</th><td>${esc(fecha(D.feval))}</td></tr>
+        <tr><th>Energía</th><td>${f(R.GET_Final, 0)} kcal/día</td><th>Agua</th><td>${isNum(R.VHT_Vasos) ? f(R.VHT_Vasos, 1) + " vasos de 200 ml al día" : ""}</td></tr>
+        <tr class="sec"><td colspan="4">Porciones al día por grupo de alimentos</td></tr>
+        <tr><th>Grupo</th><th style="width:11%">Porciones al día</th><th colspan="2">1 porción equivale a (ejemplos)</th></tr>
+        ${g.map((x) => `<tr><td><b>${esc(nombreGrupo(x.grupo, med))}</b></td><td class="num"><b>${f(x.usado, 1).replace(/,0$/, "")}</b></td><td colspan="2" class="txt">${esc(ejemplos(x.grupo, med))}</td></tr>`).join("")}
+      </tbody></table>
+      ${tUsados.length ? `<table class="hr" style="margin-top:8px"><tbody>
+        <tr class="sec"><td colspan="${tUsados.length + 1}">Distribución sugerida por tiempo de comida (porciones)</td></tr>
+        <tr><th>Grupo</th>${tUsados.map((k) => `<th>${esc(TI[k])}</th>`).join("")}</tr>
+        ${g.map((x) => `<tr><td>${esc(nombreGrupo(x.grupo, med))}</td>${tUsados.map((k) => `<td class="num">${P.tiempos[x.i].fila[k] ? f(P.tiempos[x.i].fila[k], 1).replace(/,0$/, "") : ""}</td>`).join("")}</tr>`).join("")}
+      </tbody></table>` : ""}
+      ${R.PD_Texto && R.PD_Texto !== "Faltan datos para la prescripción" ? `<p class="pauta-pd"><b>Prescripción dietética:</b> ${esc(R.PD_Texto)}</p>` : ""}
+      <p class="sec-nota" style="padding:6px 0 0">Medidas caseras: tabla de porciones de intercambio y medidas caseras de la planilla (TAB_INTERCAMBIO y TAB_MEDIDAS_CASERAS).</p>
+      <p class="firma">Firma y timbre del nutricionista: ______________________________</p>
+      ${root.AUTORIA ? `<p class="autoria">${esc(root.AUTORIA)}</p>` : ""}
+    </div>`;
+  }
+
+  L.resumen = ({ R, D, ui, T }) => {
+    const incSeg = D.res_seg !== "No", incPauta = D.res_pauta === "Sí";
+    const pv = (R.SEG && R.SEG.prev) || [], pvN = ["EMP", "EMPAM", "AUDIT", "Presión arterial", "Peso, talla y CC", "Glicemia", "Colesterol total", "PAP", "Mamografía", "EFAM / Barthel"];
+    const pvHay = pv.some((x, i) => D["prev_" + String(i).padStart(2, "0")]);
+    const pvTxt = !pvHay ? "" : ["Vigente", "Pendiente"].map((e) => { const l = pv.map((x, i) => (x.est.startsWith(e) ? pvN[i] + (x.est.includes("vencido") ? " (vencido)" : "") : "")).filter(Boolean); return l.length ? (e === "Vigente" ? "Al día: " : "Pendientes: ") + l.join(", ") : ""; }).filter(Boolean).join(". ");
     const objs = [1, 2, 3, 4, 5].map((i) => String(D["obj_" + i] || "").trim()).filter(Boolean);
     const der = String(R.Derivaciones || "").split("\n").filter(Boolean).map((x) => x.replace(/^• /, "")).concat(D.deriv_libre ? [String(D.deriv_libre)] : []);
     // Solo se muestra lo evaluado: se omiten los datos vacíos, «—», «No aplica», «Falta dato» o «Sin dato»
@@ -108,7 +152,10 @@
     const nna = R.Ciclo === "NNA";
     const lab = labAlt(R);
     const metas = [R.Meta_Peso, R.Meta_CC].filter((x) => !vacioTxt(x)).map((x) => String(x).replace(/\.$/, "")).join(". ") + (D.metas_habitos ? ". " + D.metas_habitos : "");
-    return `<div id="hojaResumen" class="hoja">
+    return `<div class="res-ops"><span>Incluir en el resumen:</span>
+      <label><input type="checkbox" data-a="res-op" data-op="res_seg" ${incSeg ? "checked" : ""}> Seguimiento y derivaciones</label>
+      <label><input type="checkbox" data-a="res-op" data-op="res_pauta" ${incPauta ? "checked" : ""}> Pauta de porciones de intercambio (hoja aparte)</label></div>
+    <div id="hojaResumen" class="hoja">
       <h2>Ficha resumen de atención nutricional</h2>
       <p class="hoja-aviso">Herramienta académica de práctica</p>
       <table class="hr"><tbody>
@@ -124,7 +171,7 @@
             ["Kcal extra por embarazo", R.GES.extra ? f(R.GES.extra, 0) + " kcal/día (meta " + f(R.GES.meta, 1) + " kg)" : ""]] : []),
           ...(R.Nodriza ? [["Nodriza", isNum(D.nod_meses) ? f(D.nod_meses, 0) + " meses posparto" : "Sí"]] : []), ["Circunferencia de cintura", D.cc ? D.cc + " cm · " + R.Riesgo_CC : ""],
           ["Presión arterial", R.PAS === "" ? "" : R.PAS + "/" + R.PAD + " mmHg"], ["Clasificación PA", R.PAS === "" ? "" : R.PA_Clasificacion],
-          ["Riesgo cardiovascular", R.RCV_Cat],
+          ["Riesgo cardiovascular", R.RCV_Cat], ["Exámenes preventivos", pvTxt],
           ["Examen físico", [D.ef_conj ? "conjuntivas " + D.ef_conj.toLowerCase() : "", Array.isArray(D.ef_cuello) && D.ef_cuello.length ? "cuello: " + D.ef_cuello.join(", ").toLowerCase() : "", D.ef_pelo ? "pelo y uñas " + D.ef_pelo.toLowerCase() : "", Array.isArray(D.ef_mucosas) && D.ef_mucosas.length ? "mucosas " + D.ef_mucosas.join(", ").toLowerCase() : ""].filter(Boolean).join(" · ")], ["Exámenes alterados", /^Sin exámenes registrados/.test(lab) ? "" : lab]]))}
         ${sec("Requerimientos", tabla([["Peso usado", R.Peso_Usado === "" ? "" : f(R.Peso_Usado, 1) + " kg (" + R.PesoTipo + ")"], ["Fórmula", R.Formula_Usada],
           ["Energía", isNum(R.GET_Final) ? f(R.GET_Final, 0) + " kcal/día · " + f(R.Kcal_Kg, 1) + " kcal/kg · " + R.Nom_Kcal : ""], ["VHT", isNum(R.VHT) ? f(R.VHT, 0) + " ml/día (" + f(R.VHT_Vasos, 1) + " vasos)" : ""],
@@ -134,12 +181,15 @@
         ${sec("Prescripción dietética", txt(R.PD_Texto === "Faltan datos para la prescripción" ? "" : R.PD_Texto))}
         ${sec("Anamnesis alimentaria", txt(/^Recordatorio sin datos/i.test(String(R.Rec24_Conclusion || "")) ? "" : R.Rec24_Conclusion) + txt(R.TFC_Conclusion && R.TFC_Conclusion !== "TFC sin datos." ? "Tendencia de consumo: " + R.TFC_Conclusion : ""))}
         ${sec("Objetivos nutricionales", objs.length ? `<tr><td colspan="4" class="txt"><ol>${objs.map((o) => `<li>${esc(o)}</li>`).join("")}</ol></td></tr>` : "")}
-        ${sec("Seguimiento", tabla([["Próximo control", fecha(R.Prox_Control)], ["PSCV", R.PSCV_Ingreso], ["Metas", metas]]) + (der.length ? `<tr><th>Derivaciones</th><td colspan="3" class="txt">${der.map(esc).join("<br>")}</td></tr>` : ""))}
+        ${!incSeg ? "" : sec("Seguimiento", tabla([["Próximo control", fecha(R.Prox_Control)], ["PSCV", R.PSCV_Ingreso], ["Metas", metas]]) + (der.length ? `<tr><th>Derivaciones</th><td colspan="3" class="txt">${der.map(esc).join("<br>")}</td></tr>` : ""))}
       </tbody></table>
       <p class="firma">Firma y timbre del nutricionista: ______________________________</p>
+      ${root.AUTORIA ? `<p class="autoria">${esc(root.AUTORIA)}</p>` : ""}
     </div>
+    ${incPauta ? (pautaHoja({ R, D, T }) || '<p class="sec-nota" style="padding:0 16px 10px">La pauta de porciones aparece cuando hay requerimiento de energía (peso, talla y actividad física).</p>') : ""}
     <div class="acciones resumen-acc" style="padding:4px 16px 16px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" data-a="imprimir-resumen">Imprimir resumen (carta)</button>
+      <button class="btn" data-a="imprimir-pauta">Imprimir solo la pauta de porciones</button>
       <button class="btn pri" data-a="guardar-paciente">Guardar paciente</button>
     </div>`;
   };
@@ -150,6 +200,6 @@
     const t = f.join(", ");
     return t ? t + (R.Lab_ODIN ? ". " + R.Lab_ODIN.charAt(0).toUpperCase() + R.Lab_ODIN.slice(1) : "") : R.LAB && R.LAB.some((x) => x.v !== "") ? "Sin exámenes alterados" : "Sin exámenes registrados";
   }
-  root.Etapa6 = { live: L, sugerencias, nivelBloom };
+  root.Etapa6 = { live: L, sugerencias, nivelBloom, pautaHoja, nombreGrupo };
   if (root.Etapa2) Object.assign(root.Etapa2.live, L);
 })(this);
