@@ -479,7 +479,7 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 </div>
 <footer class="pie-autor" id="pieAutor"></footer>
 
-<script src="calc.js?v=19"></script>
+<script src="calc.js?v=20"></script>
 <script src="etapa2.js?v=11"></script>
 <script src="etapa3.js?v=5"></script>
 <script src="etapa4.js?v=1"></script>
@@ -502,11 +502,13 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "17";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.1";
+const APP_VERSION = "2026-11-10.2";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.2", fecha: "10-11-2026", items: [
+    "DNI de NNA: el diagnóstico de talla se escribe siempre «según T/E», también en menores de 2 años (antes decía «según L/E»)."] },
   { v: "2026-11-10.1", fecha: "10-11-2026", items: [
     "Anamnesis clínica: nueva sección de controles y exámenes preventivos al día (EMP, EMPAM, PAP, mamografía, etc.) desde los 15 años, también en la consulta flash. Solo aparecen los que corresponden por edad y sexo.",
     "Pauta de porciones: el grupo de carnes bajas en grasa indica que incluye el huevo, y hay una hoja imprimible con las porciones al día, ejemplos de medidas caseras y la distribución por tiempo de comida.",
@@ -1945,6 +1947,7 @@ async function vistaPruebas() {
       ["NNA 7 años, ligera: método rápido", R(nna("2019-09-01", "Ligera")).Formula_Usada, Calc.LISTA_FORMULAS[4]],
       ["NNA 12 años: GEB OMS × PAL", R(nna("2014-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
       ["NNA 4 años: GEB OMS × PAL", R(nna("2022-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
+      ["Lactante de 10 meses: DNI dice «según T/E»", /según T\/E/.test(R({ feval: "2026-11-07", fnac: "2026-01-07", sexo: "Femenino", peso: 8.5, talla: 71 }).DNI) && !/L\/E/.test(R({ feval: "2026-11-07", fnac: "2026-01-07", sexo: "Femenino", peso: 8.5, talla: 71 }).DNI), true],
     ];
     let fd = "", okd = 0; for (const [l, g, e] of C) { const ok = igual(e, g); if (ok) okd++; fd += fila(l, e, g, ok); }
     html += `<h2 style="font-size:17px;margin:22px 0 10px">Decisiones docentes 07-11-2026 · ${okd} de ${C.length}</h2><div class="pr-caso caja" style="padding:14px"><div class="tabla-w"><table class="pr"><thead><tr><th>Comprobación</th><th>Esperado</th><th>App</th><th></th></tr></thead><tbody>${fd}</tbody></table></div></div>`;

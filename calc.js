@@ -1210,7 +1210,7 @@
     X.b5 = (cal === "Falta dato" || cal === "" || cal == null ? ", con estado nutricional sin evaluar (falta dato)"
       : (cal === "Normal" ? ", con estado nutricional normal" : ", con " + lower(cal).replace("grado iii", "grado III").replace("grado ii", "grado II").replace("grado i", "grado I")) + " según " + R.Indicador_Ref)
       + (!nna && R.Lab_DPV ? (R.Malnutricion === "Déficit" ? " y desnutrición proteica visceral " + R.Lab_DPV + " según albúmina (desnutrición mixta)" : ", con desnutrición proteica visceral " + R.Lab_DPV + " según albúmina") : "");
-    X.b6 = !nna || R.Dx_Talla === "Falta dato" || R.Dx_Talla === "No aplica" ? "" : ", " + lower(R.Dx_Talla) + " según " + (R.PC && R.PC.activa && R.PC.TE && isNum(R.PC.TE.pct) ? "T/E (Brooks 2011)" : LT(R.Edad_Meses_Aprox, 24) ? "L/E" : "T/E");
+    X.b6 = !nna || R.Dx_Talla === "Falta dato" || R.Dx_Talla === "No aplica" ? "" : ", " + lower(R.Dx_Talla) + " según " + (R.PC && R.PC.activa && R.PC.TE && isNum(R.PC.TE.pct) ? "T/E (Brooks 2011)" : PLANILLA && LT(R.Edad_Meses_Aprox, 24) ? "L/E" : "T/E") /* decisión docente 10-11-2026: en NNA siempre «T/E» */;
     const cm = S(R.Comp_Musc), cg = S(R.Comp_Graso), ne = (x) => x === "" || x === "No evaluado";
     const fa = (x) => lower(x).replace("elevado", "elevada").replace("disminuido", "disminuida");
     X.b7 = ne(cm) && ne(cg) ? "" : nna ? (cm === cg ? ", con compartimento muscular y graso " + lower(cm) : ne(cm) ? ", con compartimento graso " + lower(cg) : ne(cg) ? ", con compartimento muscular " + lower(cm) : ", con compartimento muscular " + lower(cm) + " y graso " + lower(cg))
