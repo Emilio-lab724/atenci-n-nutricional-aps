@@ -1432,6 +1432,8 @@
       const dv = Array.isArray(D.ges_deriv) ? D.ges_deriv : [];
       for (const x of dv) L.push("• Derivar a " + x);
     }
+    // Control con dentista (NNA ≥ 6 meses; portafolio: salud bucal y derivación a odontólogo)
+    if (nna && (S(D.od_control) === "No, atrasado" || S(D.od_control) === "Nunca ha ido")) L.push("• Control con dentista " + (S(D.od_control) === "Nunca ha ido" ? "nunca realizado" : "atrasado") + ": derivar a odontólogo");
     R.Derivaciones = L.map((x) => x + "\n").join("") + R.Social_Deriv;
   }
 

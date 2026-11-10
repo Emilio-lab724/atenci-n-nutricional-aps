@@ -479,12 +479,12 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 </div>
 <footer class="pie-autor" id="pieAutor"></footer>
 
-<script src="calc.js?v=21"></script>
+<script src="calc.js?v=22"></script>
 <script src="etapa2.js?v=11"></script>
 <script src="etapa3.js?v=6"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=1"></script>
-<script src="etapa6.js?v=9"></script>
+<script src="etapa6.js?v=10"></script>
 <script src="etapa7.js?v=2"></script>
 <script src="excel.js?v=3"></script>
 <script>
@@ -502,11 +502,14 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "18";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.5";
+const APP_VERSION = "2026-11-10.6";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.6", fecha: "10-11-2026", items: [
+    "Anamnesis clínica: sección «Deposiciones» (frecuencia y escala de Bristol; en lactantes también color y consistencia) para todos los ciclos vitales, también en la consulta flash.",
+    "NNA desde los 6 meses: sección «Salud bucal y control con dentista». Si no está al día o nunca ha ido, se sugiere derivar a odontólogo en Seguimiento. Ambos datos salen en el resumen."] },
   { v: "2026-11-10.5", fecha: "10-11-2026", items: [
     "«¿Hasta qué curso estudió?»: se agregan «Educación superior incompleta» y «Educación superior completa».",
     "«Tipo de alimentación del lactante (< 1 año)» solo aparece cuando la fecha de nacimiento indica un menor de 1 año (antes también salía mientras faltaba la fecha)."] },
@@ -665,6 +668,7 @@ const condSec = {
   adolescente: (R) => R.GrupoEtario === "Adolescente",
   pc_activa: (R) => !!(R.PC && R.PC.activa),
   no_lactante: (R) => !esLactante(R),
+  nna_dientes: (R) => R.Ciclo === "NNA" && typeof R.Edad_Meses === "number" && R.Edad_Meses >= 6,
   prev15: (R) => typeof R.Edad_Anios === "number" && R.Edad_Anios >= 15,
   familia: () => { const v = st.p ? datos().so_vive : ""; return !vacio(v) && v !== "Solo/a" && !/^Institución/.test(v); },
 };
@@ -673,12 +677,14 @@ const esLactante = (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 24;
 const OCULTAR_EMB = new Set(["NNA", "NNA_mayor1", "NNA_mayor2", "escolar_adol", "lactante", "mujer_fertil"]);
 // Preguntas esenciales: las de las planillas (alimentan cálculos, alertas o el DNI) y las del portafolio que también entran en un cálculo o alerta.
 // El resto del portafolio queda plegado en «Más preguntas».
-const ESENCIALES_P = new Set(["px_farm_si", "px_farm_lista", "px_supl_si", "px_supl_lista", "px_mor1", "px_mor2", "px_mor3", "px_mor4", "px_cig", "px_cig_unidad",
+const ESENCIALES_P = new Set(["px_depos", "px_bristol", "px_depos_lact", "px_farm_si", "px_farm_lista", "px_supl_si", "px_supl_lista", "px_mor1", "px_mor2", "px_mor3", "px_mor4", "px_cig", "px_cig_unidad",
   "px_tca1", "px_tca2", "px_tca3", "px_tca4", "px_tca5", "px_tca6", "px_tca7", "px_tca8", "px_tca9", "px_af_veces", "px_af_min", "px_viv_falta", "px_ntrab",
   "px_estab", "px_curso", "px_jornada", "px_g", "px_p", "px_a", "px_multiple", "px_vacunas", "px_vacunas_motivo", "px_tanner"]);
 const modoDe = (p) => (p && p.modo === "flash" ? "flash" : "completa");
 const esEsencial = (k) => { const f = CAMPOS[k]; return !f || !f.portafolio || ESENCIALES_P.has(k); };
 const condCampo = {
+  px_depos_lact: (R) => esLactante(R),
+  od_fecha: (R, D) => D.od_control === "Sí, al día" || D.od_control === "No, atrasado",
   req_ajuste_pct: (R) => R.Ciclo === "NNA" && !R.Embarazada,
   ale_cuales: (R, D) => D.ale_tiene === "Sí",
   ale_det: (R, D) => D.ale_tiene === "Sí",
@@ -814,6 +820,7 @@ function migrar(p) {
   delete p.tipo;
   for (const c of p.controles) {
     const d = c.datos;
+    if (!vacio(d.px_intestinal) && vacio(d.px_depos)) { d.px_depos = d.px_intestinal; delete d.px_intestinal; } // deposiciones: un solo campo para todos los ciclos
     if (!vacio(d.farmacos) && d.px_farm_si === undefined) { d.px_farm_si = "Sí"; d.px_farm_lista = [{ nombre: String(d.farmacos), dosis: "", funcion: "", fm: false }]; delete d.farmacos; }
     if (!vacio(d.so_supl) && d.px_supl_si === undefined) { d.px_supl_si = "Sí"; d.px_supl_lista = [{ nombre: String(d.so_supl), dosis: "", funcion: "" }]; delete d.so_supl; }
   }

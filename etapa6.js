@@ -185,6 +185,8 @@
           ...(R.Nodriza ? [["Nodriza", isNum(D.nod_meses) ? f(D.nod_meses, 0) + " meses posparto" : "Sí"]] : []), ["Circunferencia de cintura", D.cc ? D.cc + " cm · " + R.Riesgo_CC : ""],
           ["Presión arterial", R.PAS === "" ? "" : R.PAS + "/" + R.PAD + " mmHg"], ["Clasificación PA", R.PAS === "" ? "" : R.PA_Clasificacion],
           ["Riesgo cardiovascular", R.RCV_Cat], ["Exámenes preventivos", pvTxt],
+          ["Deposiciones", [D.px_depos ? String(D.px_depos).toLowerCase() : "", D.px_bristol ? "Bristol " + String(D.px_bristol).replace("Tipo ", "tipo ") : "", D.px_depos_lact || ""].filter(Boolean).join(" · ")],
+          ["Control con dentista", R.Ciclo === "NNA" && D.od_control ? D.od_control + (D.od_fecha ? " (último: " + fecha(D.od_fecha) + ")" : "") : ""],
           ["Alergias / intolerancias", alergiasTxt(D)], ["Grupos que no consume", noComeTxt(D)],
           ["Examen físico", [D.ef_conj ? "conjuntivas " + D.ef_conj.toLowerCase() : "", Array.isArray(D.ef_cuello) && D.ef_cuello.length ? "cuello: " + D.ef_cuello.join(", ").toLowerCase() : "", D.ef_pelo ? "pelo y uñas " + D.ef_pelo.toLowerCase() : "", Array.isArray(D.ef_mucosas) && D.ef_mucosas.length ? "mucosas " + D.ef_mucosas.join(", ").toLowerCase() : ""].filter(Boolean).join(" · ")], ["Exámenes alterados", /^Sin exámenes registrados/.test(lab) ? "" : lab]]))}
         ${sec("Requerimientos", tabla([["Peso usado", R.Peso_Usado === "" ? "" : f(R.Peso_Usado, 1) + " kg (" + R.PesoTipo + ")"], ["Fórmula", R.Formula_Usada],
