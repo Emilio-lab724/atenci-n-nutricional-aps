@@ -484,7 +484,7 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 <script src="etapa3.js?v=7"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=2"></script>
-<script src="etapa6.js?v=12"></script>
+<script src="etapa6.js?v=13"></script>
 <script src="etapa7.js?v=2"></script>
 <script src="excel.js?v=3"></script>
 <script>
@@ -502,11 +502,13 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "20";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.8";
+const APP_VERSION = "2026-11-10.9";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.9", fecha: "10-11-2026", items: [
+    "Resumen de NNA: en vez del IMC se muestran los indicadores válidos para la edad con su puntaje Z y calificación (T/E siempre; P/E, P/T, IMC/E y PCe/E cuando corresponden), marcando el indicador que manda la calificación nutricional."] },
   { v: "2026-11-10.8", fecha: "10-11-2026", items: [
     "Prescripción dietética del lactante menor (0 a 11 meses 29 días): «Régimen lactante menor», sin consistencia, digestibilidad, colaciones ni pauta de intercambio. Se indica el tipo de alimentación (LME, LM + FA, FA, LM + AC, FA + AC), la fórmula con su dilución (con calculadora), el volumen y los horarios de las tomas, la papilla, el postre y el agua.",
     "Calcula el GET por kcal/kg × peso, el aporte, el % de adecuación (hipo, normo o hipercalórico), las proteínas y los lípidos cuando se ingresan sus valores por 100 ml / 100 g, el VHT (150 o 130 ml/kg) y la suplementación (vitamina D; hierro con LM exclusiva desde los 4 meses).",

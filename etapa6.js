@@ -191,6 +191,12 @@
     const sec = (titulo, cuerpo) => (cuerpo ? `<tr class="sec"><td colspan="4">${esc(titulo)}</td></tr>` + cuerpo : "");
     const txt = (v) => (vacioTxt(v) ? "" : `<tr><td colspan="4" class="txt">${esc(v)}</td></tr>`);
     const nna = R.Ciclo === "NNA";
+    // NNA (sin PC ni gestación): en vez del IMC se muestran los indicadores válidos con su puntaje Z y calificación; T/E siempre
+    const zT = (z) => (isNum(z) ? "Z " + (z > 0 ? "+" : z < 0 ? "−" : "") + f(Math.abs(z), 2) : "");
+    const indNNA = nna && !R.Embarazada && R.ind && !(R.PC && R.PC.activa) ? [["P/E", "PE", "P/E"], ["T/E", "TE", ""], ["P/T", "PT", "P/T"], ["IMC/E", "IMC", "IMC/E"], ["PCe/E", "PC", ""]]
+      .filter(([, k]) => k === "TE" || (R.ind[k] && isNum(R.ind[k].Z)))
+      .map(([n, k, m]) => { const i = R.ind[k] || {};
+        return [n + (k === "IMC" && isNum(R.IMC) ? " (IMC " + f(R.IMC, 1) + ")" : ""), isNum(i.Z) ? zT(i.Z) + " · " + String(i.cls).replace(/^Longitud/, "Talla") + (m && R.IndicadorNNA === m ? " (indicador que manda)" : "") : (i.cls || "Falta dato")]; }) : null;
     const lab = labAlt(R);
     const metas = [R.Meta_Peso, R.Meta_CC].filter((x) => !vacioTxt(x)).map((x) => String(x).replace(/\.$/, "")).join(". ") + (D.metas_habitos ? ". " + D.metas_habitos : "");
     return `<div class="res-ops"><span>Incluir en el resumen:</span>
@@ -203,9 +209,9 @@
         ${sec("Paciente", tabla([["Nombre", D.nombre], ["RUT", D.rut], ["Sexo / edad", (D.sexo || "") + (R.Edad_Texto ? " · " + R.Edad_Texto : "")], ["Fecha evaluación", fecha(D.feval)],
           ["Ciclo vital / grupo", R.Ciclo ? R.Ciclo + " · " + R.GrupoEtario : ""], ["Programa", R.Prox_Programa],
           ["Vive con", (D.so_vive || "") + (() => { const f = []; for (let i = 0; i < 12; i++) { const k = "fam_" + String(i).padStart(2, "0") + "_", pa = D[k + "par"], ed = D[k + "edad"]; if (pa || isNum(ed)) f.push((pa || "integrante") + (isNum(ed) ? " (" + ed + ")" : "")); } return f.length ? ": " + f.join(", ") : ""; })()]]))}
-        ${sec("Evaluación", tabla([["Peso / talla", R.Peso === "" ? "" : f(R.Peso, 1) + " kg" + (R.Talla_cm === "" ? "" : " · " + f(R.Talla_cm, 1) + " cm")], ["IMC", isNum(R.IMC) ? f(R.IMC, 1) + " kg/m²" : ""],
-          ["Calificación nutricional", vacioTxt(R.Calificacion_Nutricional) ? "" : R.Calificacion_Nutricional + (vacioTxt(R.Indicador_Ref) ? "" : " según " + R.Indicador_Ref)], ["Talla", nna && !R.Embarazada ? R.Dx_Talla : ""],
-          ["Puntaje Z", nna && !R.Embarazada ? R.Z_Ref : ""],
+        ${sec("Evaluación", tabla([["Peso / talla", R.Peso === "" ? "" : f(R.Peso, 1) + " kg" + (R.Talla_cm === "" ? "" : " · " + f(R.Talla_cm, 1) + " cm")], ...(indNNA ? [] : [["IMC", isNum(R.IMC) ? f(R.IMC, 1) + " kg/m²" : ""]]),
+          ["Calificación nutricional", vacioTxt(R.Calificacion_Nutricional) ? "" : R.Calificacion_Nutricional + (vacioTxt(R.Indicador_Ref) ? "" : " según " + R.Indicador_Ref)],
+          ...(indNNA ? indNNA : [["Talla", nna && !R.Embarazada ? R.Dx_Talla : ""], ["Puntaje Z", nna && !R.Embarazada ? R.Z_Ref : ""]]),
           ...(R.Embarazada && R.GES ? [["Semanas de gestación", isNum(R.SG) ? f(R.SG, 0) + " SG" + (R.GES.mult ? " · embarazo múltiple" : "") : ""],
             ["Estado pregestacional", isNum(R.GES.imcPre) ? "IMC " + f(R.GES.imcPre, 1) + " · " + R.GES.enPre + " (incremento recomendado " + R.GES.rangoTxt + " kg)" : ""],
             ["Incremento de peso", isNum(R.GES.incSemG) ? f(R.GES.incSemG, 0) + " g/sem · " + R.GES.incCls : ""],
