@@ -479,9 +479,9 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 </div>
 <footer class="pie-autor" id="pieAutor"></footer>
 
-<script src="calc.js?v=20"></script>
+<script src="calc.js?v=21"></script>
 <script src="etapa2.js?v=11"></script>
-<script src="etapa3.js?v=5"></script>
+<script src="etapa3.js?v=6"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=1"></script>
 <script src="etapa6.js?v=9"></script>
@@ -502,11 +502,13 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "17";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.3";
+const APP_VERSION = "2026-11-10.4";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.4", fecha: "10-11-2026", items: [
+    "Requerimientos NNA: en «Ajustar el cálculo» hay un ajuste hipo / hipercalórico en % del GET (por ejemplo −15 o +20). Se aplica a la fórmula usada y la tabla muestra el GET ajustado de todas las fórmulas, con su % de adecuación y nomenclatura."] },
   { v: "2026-11-10.3", fecha: "10-11-2026", items: [
     "Anamnesis clínica: nueva sección «Alergias alimentarias y alimentos que no consume» para todas las edades (también en flash). Se muestra en el resumen y en la pauta de porciones, y como aviso en la prescripción dietética."] },
   { v: "2026-11-10.2", fecha: "10-11-2026", items: [
@@ -674,6 +676,7 @@ const ESENCIALES_P = new Set(["px_farm_si", "px_farm_lista", "px_supl_si", "px_s
 const modoDe = (p) => (p && p.modo === "flash" ? "flash" : "completa");
 const esEsencial = (k) => { const f = CAMPOS[k]; return !f || !f.portafolio || ESENCIALES_P.has(k); };
 const condCampo = {
+  req_ajuste_pct: (R) => R.Ciclo === "NNA" && !R.Embarazada,
   ale_cuales: (R, D) => D.ale_tiene === "Sí",
   ale_det: (R, D) => D.ale_tiene === "Sí",
   noc_grupos: (R, D) => D.noc_tiene === "Sí",
@@ -1954,6 +1957,8 @@ async function vistaPruebas() {
       ["NNA 7 años, ligera: método rápido", R(nna("2019-09-01", "Ligera")).Formula_Usada, Calc.LISTA_FORMULAS[4]],
       ["NNA 12 años: GEB OMS × PAL", R(nna("2014-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
       ["NNA 4 años: GEB OMS × PAL", R(nna("2022-09-01", "Moderada")).Formula_Usada, Calc.LISTA_FORMULAS[3]],
+      ["NNA 12 años, +20 %: GET = GET de la fórmula × 1,2", (() => { const a = R(nna("2014-09-01", "Moderada")), b = R(Object.assign(nna("2014-09-01", "Moderada"), { req_ajuste_pct: 20 })); return b.GET_Final === Math.round(a.GET_Calc * 1.2); })(), true],
+      ["NNA 7 años, −30 %: hipocalórico", R(Object.assign(nna("2019-09-01", "Moderada"), { req_ajuste_pct: -30 })).Nom_Kcal, "Hipocalórico"],
       ["Lactante de 10 meses: DNI dice «según T/E»", /según T\/E/.test(R({ feval: "2026-11-07", fnac: "2026-01-07", sexo: "Femenino", peso: 8.5, talla: 71 }).DNI) && !/L\/E/.test(R({ feval: "2026-11-07", fnac: "2026-01-07", sexo: "Femenino", peso: 8.5, talla: 71 }).DNI), true],
     ];
     let fd = "", okd = 0; for (const [l, g, e] of C) { const ok = igual(e, g); if (ok) okd++; fd += fila(l, e, g, ok); }

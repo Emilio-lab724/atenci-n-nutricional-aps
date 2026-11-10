@@ -684,7 +684,11 @@
     const fin = S(D.req_formula);
     R.Formula_Usada = fin !== "" && fx(fin) && fx(fin).aplica === "Sí" ? fin : E.Sugerida;
     R.GET_Calc = fx(R.Formula_Usada) ? fx(R.Formula_Usada).get : "—";
-    R.GET_Final = isNum(R.GET_Calc) ? xr(R.GET_Calc + E.Ajuste, 0) : "";
+    // Decisión docente (10-11-2026): en NNA (sin gestación) se puede ajustar el GET de cualquier fórmula en ± % para un régimen hipo o hipercalórico
+    E.AjustePct = !PLANILLA && nna && !R.Embarazada && isNum(D.req_ajuste_pct) ? D.req_ajuste_pct : 0;
+    const conAj = (g) => (isNum(g) ? xr(g * (1 + E.AjustePct / 100) + E.Ajuste, 0) : "");
+    for (const x of F) x.getAj = x.aplica === "Sí" ? conAj(x.get) : "";
+    R.GET_Final = isNum(R.GET_Calc) ? conAj(R.GET_Calc) : "";
     // Gestante y nodriza: GEB FAO/OMS/UNU 2004 × PAL (< 18 años: tramo 18-30) + kcal extra por embarazo / + 1.000 kcal múltiple desde la semana 20 / + 500 kcal nodriza
     if (gn && hayP) {
       const e = R.Edad_Anios, Pg = num0(P);

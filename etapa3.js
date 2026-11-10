@@ -32,7 +32,10 @@
     const { R } = ctx; COLORES = ctx.ESQ.colores;
     const fp = faltaPeso(R); if (fp) return fp;
     const E = R.EN, nna = R.Ciclo === "NNA";
-    const usada = R.Formula_Usada, sug = E.Sugerida;
+    const usada = R.Formula_Usada, sug = E.Sugerida, aj = nna && (E.AjustePct || E.Ajuste);
+    const ref = R.Kcal_Kg_Ref, Pu = R.Peso_Usado;
+    const adecDe = (g) => (isNum(g) && isNum(ref) && ref && isNum(Pu) && Pu ? g / Pu / ref * 100 : "");
+    const nomDe = (a) => (!isNum(a) ? "—" : a < 90 ? "Hipocalórico" : a <= 110 ? "Normocalórico" : "Hipercalórico");
     let h = gestante(R);
     h += kpis([
       ["GET final", isNum(R.GET_Final) ? f0(R.GET_Final) + " kcal/día" : "—", ""],
@@ -45,16 +48,17 @@
       if (x.aplica !== "Sí") continue;
       const us = x.nombre === usada;
       filas.push(`<tr class="${us ? "usada" : ""}"><td>${esc(x.nombre)}${x.nombre === sug ? ' <span class="chip">sugerida</span>' : ""}${us ? ' <span class="chip acc">usada</span>' : ""}</td>
-        <td class="num">${f1(x.c)}</td><td class="num">${isNum(x.d) ? f2(x.d) : esc(x.d)}</td><td class="num">${x.e === "" ? "" : f0(x.e)}</td><td class="num"><b>${f0(x.get)}</b></td><td class="fuente-c">${esc(x.fuente)}</td></tr>`);
+        <td class="num">${f1(x.c)}</td><td class="num">${isNum(x.d) ? f2(x.d) : esc(x.d)}</td><td class="num">${x.e === "" ? "" : f0(x.e)}</td><td class="num">${aj ? f0(x.get) : `<b>${f0(x.get)}</b>`}</td>${aj ? `<td class="num"><b>${f0(x.getAj)}</b></td>` : ""}${nna ? `<td class="num">${isNum(adecDe(x.getAj)) ? f0(adecDe(x.getAj)) + " %" : "—"}</td><td>${pill(nomDe(adecDe(x.getAj)))}</td>` : ""}<td class="fuente-c">${esc(x.fuente)}</td></tr>`);
     }
     h += dl([
       ["Fórmula usada", esc(usada || "—") + (usada !== sug ? ` <span class="chip">elegida (sugerida: ${esc(sug)})</span>` : "")],
       ["GET calculado", isNum(R.GET_Calc) ? f0(R.GET_Calc) + " kcal/día" : esc(R.GET_Calc)],
+      nna && E.AjustePct ? ["Ajuste hipo / hipercalórico", (E.AjustePct > 0 ? "+" : "") + f0(E.AjustePct) + " % del GET de la fórmula → " + f0(R.GET_Final) + " kcal/día"] : null,
       E.Ajuste ? ["Ajuste por objetivo", (E.Ajuste > 0 ? "+" : "") + f0(E.Ajuste) + " kcal/día"] : null,
       !nna || isNum(R.PAL_NNA) ? ["Factor de actividad", f2(R.Factor_AF) + " · actividad " + esc(R.Actividad.toLowerCase()) + ' <span class="chip">ligera 1,4 · moderada 1,7 · intensa 2,0</span>'] : null,
       nna ? ["Costo de crecimiento", f0(R.Costo_Crec) + " kcal/día"] : null,
       nna && R.Edad_Meses_Aprox !== "" && R.Edad_Meses_Aprox < 12 ? ["Tipo de alimentación", esc(E.AlimLact)] : null,
-      nna && R.Edad_Anios >= 6 ? ["Ajuste del método rápido (≥ 6 años)", f2(R.Ajuste_Rapido) + " (ligera −15 % · moderada sin ajuste · intensa +15 %)"] : null,
+      nna && R.Edad_Anios >= 5 ? ["Ajuste del método rápido (≥ 5 años)", f2(R.Ajuste_Rapido) + " (ligera −15 % · moderada sin ajuste · intensa +15 %)"] : null,
       !nna ? ["kcal/kg del factorial", f1(R.KcalKg_Fact) + ` <span class="chip">${R.Malnutricion ? esc(R.Malnutricion.toLowerCase()) : "—"}</span>`] : null,
       !nna && R.Factor_Pat !== 1 ? ["Factor patológico (FAO/OMS)", f2(R.Factor_Pat)] : null,
     ]);
@@ -67,7 +71,12 @@
         ["Energía de recuperación / crecimiento", isNum(R.Krick_Crec) ? f0(R.Krick_Crec) + " kcal/día" : esc(R.Krick_Crec)],
       ]);
     }
-    h += tabla(["Fórmulas que aplican", "GEB / TEE / kcal·kg", "Factor / peso", "Crecimiento", "GET (kcal/día)", "Fuente"], filas.length ? filas : ['<tr><td colspan="6">Ninguna fórmula aplica con los datos actuales.</td></tr>'], "formulas");
+    const cab = ["Fórmulas que aplican", "GEB / TEE / kcal·kg", "Factor / peso", "Crecimiento", aj ? "GET fórmula" : "GET (kcal/día)"].concat(aj ? ["GET ajustado"] : [], nna ? ["% adecuación", "Nomenclatura"] : [], ["Fuente"]);
+    h += tabla(cab, filas.length ? filas : [`<tr><td colspan="${cab.length}">Ninguna fórmula aplica con los datos actuales.</td></tr>`], "formulas");
+    if (nna && E.AjustePct) {
+      const a = R.Adec_Kcal, quiere = E.AjustePct > 0 ? "Hipercalórico" : "Hipocalórico";
+      if (isNum(a) && R.Nom_Kcal !== quiere) h += `<p class="aviso-g">Con ${E.AjustePct > 0 ? "+" : ""}${f0(E.AjustePct)} % la adecuación queda en ${f0(a)} % de la referencia (${f1(ref)} kcal/kg): todavía es <b>${esc(R.Nom_Kcal.toLowerCase())}</b>. Para que sea ${quiere.toLowerCase()} debe quedar ${E.AjustePct > 0 ? "sobre 110 %" : "bajo 90 %"} (Consenso p. 21).</p>`;
+    }
     const v = [];
     if (nna && R.Edad_Anios !== "" && R.Edad_Anios >= 1) v.push(V(ctx, "pal"));
     if (!nna) v.push(V(ctx, "V20"));
