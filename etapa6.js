@@ -28,7 +28,7 @@
   };
 
   // ---------------- Prescripción ----------------
-  L.pd_texto = ({ R }) => `<p class="concl">${esc(R.PD_Texto)}</p>` + dl([
+  L.pd_texto = ({ R, D }) => (D.ale_tiene === "Sí" || D.noc_tiene === "Sí" ? `<p class="aviso-g" style="margin:10px 16px 0"><b>Considere al prescribir:</b> ${esc([D.ale_tiene === "Sí" ? "alergias o intolerancias: " + alergiasTxt(D) : "", D.noc_tiene === "Sí" ? "no consume: " + noComeTxt(D) : ""].filter(Boolean).join(". "))}.</p>` : "") + `<p class="concl">${esc(R.PD_Texto)}</p>` + dl([
     ["Energía", isNum(R.GET_Final) ? f(R.GET_Final, 0) + " kcal/día · " + f(R.Kcal_Kg, 1) + " kcal/kg" : "—"],
     ["Proteínas", isNum(R.Prot_g) ? f(R.Prot_g, 1) + " g · " + f(R.Prot_Gkg, 2) + " g/kg · " + f(R.Prot_Pct, 0) + " %" : "—"],
     ["Lípidos", isNum(R.Lip_g) ? f(R.Lip_g, 1) + " g · " + f(+R.Lip_Pct, 0) + " %" : "—"],
@@ -105,6 +105,18 @@
     const lista = (pref.length ? pref : todos).slice().sort((x, y) => (/^Huevo/.test(y[0]) ? 1 : 0) - (/^Huevo/.test(x[0]) ? 1 : 0)).slice(0, 6);
     return lista.map((m) => m[0] + ": " + m[2]).join(" · ");
   };
+  // Alergias / intolerancias y grupos que no consume (anamnesis clínica)
+  const lista = (v) => (Array.isArray(v) ? v.filter((x) => x !== "Otro") : []);
+  function alergiasTxt(D) {
+    const a = D.ale_tiene === "Sí" ? [lista(D.ale_cuales).join(", ").toLowerCase(), D.ale_det || ""].filter(Boolean).join("; ") || "sí (sin detalle)" : D.ale_tiene === "No" ? "No refiere" : "";
+    const viejo = D.px_alergias && !a ? String(D.px_alergias) : "";
+    return a || viejo;
+  }
+  function noComeTxt(D) {
+    if (D.noc_tiene !== "Sí") return D.noc_tiene === "No" ? "Consume todos los grupos" : "";
+    const g = lista(D.noc_grupos).join(", ").toLowerCase(), m = lista(D.noc_motivo).join(", ").toLowerCase();
+    return [g || "sin detalle", m ? "motivo: " + m : "", D.noc_det || ""].filter(Boolean).join("; ");
+  }
   const conHuevo = (grupo, med) => (med || []).some((m) => m[1] === grupo && /^Huevo/.test(m[0]));
   const nombreGrupo = (grupo, med) => grupo + (conHuevo(grupo, med) ? " (incluye huevo)" : "");
   function pautaHoja({ R, D, T }) {
@@ -119,6 +131,7 @@
       <table class="hr"><tbody>
         <tr><th>Nombre</th><td>${esc(D.nombre || "")}</td><th>Fecha</th><td>${esc(fecha(D.feval))}</td></tr>
         <tr><th>Energía</th><td>${f(R.GET_Final, 0)} kcal/día</td><th>Agua</th><td>${isNum(R.VHT_Vasos) ? f(R.VHT_Vasos, 1) + " vasos de 200 ml al día" : ""}</td></tr>
+        ${D.ale_tiene === "Sí" || D.noc_tiene === "Sí" ? `<tr><th>Evitar / no consume</th><td colspan="3"><b>${esc([D.ale_tiene === "Sí" ? "Alergias o intolerancias: " + alergiasTxt(D) : "", D.noc_tiene === "Sí" ? "No consume: " + noComeTxt(D) : ""].filter(Boolean).join(". "))}</b> · Reemplace esas porciones por otro alimento del mismo grupo o de un grupo equivalente.</td></tr>` : ""}
         <tr class="sec"><td colspan="4">Porciones al día por grupo de alimentos</td></tr>
         <tr><th>Grupo</th><th style="width:11%">Porciones al día</th><th colspan="2">1 porción equivale a (ejemplos)</th></tr>
         ${g.map((x) => `<tr><td><b>${esc(nombreGrupo(x.grupo, med))}</b></td><td class="num"><b>${f(x.usado, 1).replace(/,0$/, "")}</b></td><td colspan="2" class="txt">${esc(ejemplos(x.grupo, med))}</td></tr>`).join("")}
@@ -172,6 +185,7 @@
           ...(R.Nodriza ? [["Nodriza", isNum(D.nod_meses) ? f(D.nod_meses, 0) + " meses posparto" : "Sí"]] : []), ["Circunferencia de cintura", D.cc ? D.cc + " cm · " + R.Riesgo_CC : ""],
           ["Presión arterial", R.PAS === "" ? "" : R.PAS + "/" + R.PAD + " mmHg"], ["Clasificación PA", R.PAS === "" ? "" : R.PA_Clasificacion],
           ["Riesgo cardiovascular", R.RCV_Cat], ["Exámenes preventivos", pvTxt],
+          ["Alergias / intolerancias", alergiasTxt(D)], ["Grupos que no consume", noComeTxt(D)],
           ["Examen físico", [D.ef_conj ? "conjuntivas " + D.ef_conj.toLowerCase() : "", Array.isArray(D.ef_cuello) && D.ef_cuello.length ? "cuello: " + D.ef_cuello.join(", ").toLowerCase() : "", D.ef_pelo ? "pelo y uñas " + D.ef_pelo.toLowerCase() : "", Array.isArray(D.ef_mucosas) && D.ef_mucosas.length ? "mucosas " + D.ef_mucosas.join(", ").toLowerCase() : ""].filter(Boolean).join(" · ")], ["Exámenes alterados", /^Sin exámenes registrados/.test(lab) ? "" : lab]]))}
         ${sec("Requerimientos", tabla([["Peso usado", R.Peso_Usado === "" ? "" : f(R.Peso_Usado, 1) + " kg (" + R.PesoTipo + ")"], ["Fórmula", R.Formula_Usada],
           ["Energía", isNum(R.GET_Final) ? f(R.GET_Final, 0) + " kcal/día · " + f(R.Kcal_Kg, 1) + " kcal/kg · " + R.Nom_Kcal : ""], ["VHT", isNum(R.VHT) ? f(R.VHT, 0) + " ml/día (" + f(R.VHT_Vasos, 1) + " vasos)" : ""],

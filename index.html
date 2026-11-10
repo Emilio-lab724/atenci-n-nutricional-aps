@@ -484,7 +484,7 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 <script src="etapa3.js?v=5"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=1"></script>
-<script src="etapa6.js?v=8"></script>
+<script src="etapa6.js?v=9"></script>
 <script src="etapa7.js?v=2"></script>
 <script src="excel.js?v=3"></script>
 <script>
@@ -502,11 +502,13 @@ function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toStri
 // ---------- datos ----------
 const VERSION_DATOS = "17";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.2";
+const APP_VERSION = "2026-11-10.3";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.3", fecha: "10-11-2026", items: [
+    "Anamnesis clínica: nueva sección «Alergias alimentarias y alimentos que no consume» para todas las edades (también en flash). Se muestra en el resumen y en la pauta de porciones, y como aviso en la prescripción dietética."] },
   { v: "2026-11-10.2", fecha: "10-11-2026", items: [
     "DNI de NNA: el diagnóstico de talla se escribe siempre «talla … según T/E», también en menores de 2 años (antes decía «longitud … según L/E»)."] },
   { v: "2026-11-10.1", fecha: "10-11-2026", items: [
@@ -672,6 +674,11 @@ const ESENCIALES_P = new Set(["px_farm_si", "px_farm_lista", "px_supl_si", "px_s
 const modoDe = (p) => (p && p.modo === "flash" ? "flash" : "completa");
 const esEsencial = (k) => { const f = CAMPOS[k]; return !f || !f.portafolio || ESENCIALES_P.has(k); };
 const condCampo = {
+  ale_cuales: (R, D) => D.ale_tiene === "Sí",
+  ale_det: (R, D) => D.ale_tiene === "Sí",
+  noc_grupos: (R, D) => D.noc_tiene === "Sí",
+  noc_motivo: (R, D) => D.noc_tiene === "Sí",
+  noc_det: (R, D) => D.noc_tiene === "Sí",
   ant_erc_etapa: (R, D) => D.ant_erc === "Sí",
   alim_lact: (R) => R.Edad_Meses === "" || R.Edad_Meses < 12,
   so_estres_txt: (R, D) => D.so_estres === "Sí",
