@@ -500,13 +500,16 @@ function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return
 function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ---------- datos ----------
-const VERSION_DATOS = "17";
+const VERSION_DATOS = "18";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.4";
+const APP_VERSION = "2026-11-10.5";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.5", fecha: "10-11-2026", items: [
+    "«¿Hasta qué curso estudió?»: se agregan «Educación superior incompleta» y «Educación superior completa».",
+    "«Tipo de alimentación del lactante (< 1 año)» solo aparece cuando la fecha de nacimiento indica un menor de 1 año (antes también salía mientras faltaba la fecha)."] },
   { v: "2026-11-10.4", fecha: "10-11-2026", items: [
     "Requerimientos NNA: en «Ajustar el cálculo» hay un ajuste hipo / hipercalórico en % del GET (por ejemplo −15 o +20). Se aplica a la fórmula usada y la tabla muestra el GET ajustado de todas las fórmulas, con su % de adecuación y nomenclatura."] },
   { v: "2026-11-10.3", fecha: "10-11-2026", items: [
@@ -683,7 +686,7 @@ const condCampo = {
   noc_motivo: (R, D) => D.noc_tiene === "Sí",
   noc_det: (R, D) => D.noc_tiene === "Sí",
   ant_erc_etapa: (R, D) => D.ant_erc === "Sí",
-  alim_lact: (R) => R.Edad_Meses === "" || R.Edad_Meses < 12,
+  alim_lact: (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 12 && R.Ciclo === "NNA",
   so_estres_txt: (R, D) => D.so_estres === "Sí",
   so_red_txt: (R, D) => D.so_red === "Sí",
   px_chupete: (R) => R.GrupoEtario === "Preescolar",
@@ -936,14 +939,18 @@ function opsReq(k) {
   const v = datos()[k]; if (v && !ops.includes(v)) ops.push(v); // conserva una elección previa que ya no aplica (se usa la sugerida)
   return ops;
 }
-function opciones(f) { return f.list ? LISTAS[f.list] || [] : f.options || []; }
+function opciones(f, v) {
+  const o = f.list ? LISTAS[f.list] || [] : f.options || [];
+  // un valor guardado con una opción antigua (p. ej. «Técnica / superior») se sigue mostrando
+  return typeof v === "string" && v && !o.includes(v) ? o.concat([v]) : o;
+}
 function campoHTML(k) {
   const f = CAMPOS[k], D = datos(), v = D[k], id = "f_" + k;
   if (!f) return "";
   const lbl = `<label for="${id}" data-lbl="${k}">${esc(f.label)}</label>`;
   let ctl = "", ancho = false;
   if (f.type === "list" || f.type === "options") {
-    const ops = k === "actividad" && D.pc_base === "Sí" ? LISTAS.Lista_ActividadPC : (k === "req_formula" || k === "hid_metodo") ? opsReq(k) : f.dyn ? ((ESQ.opciones_din[f.dyn] || {})[D.px_estab] || []) : opciones(f);
+    const ops = k === "actividad" && D.pc_base === "Sí" ? LISTAS.Lista_ActividadPC : (k === "req_formula" || k === "hid_metodo") ? opsReq(k) : f.dyn ? ((ESQ.opciones_din[f.dyn] || {})[D.px_estab] || []) : opciones(f, v);
     if (ops.length === 2 && f.list === "Lista_SiNo") {
       return `<div class="campo" data-campo="${k}"><span class="lbl" id="l_${k}" data-lbl="${k}">${esc(f.label)}</span>
         <div class="seg" role="radiogroup" aria-labelledby="l_${k}">${ops.map((o, i) => `<label><input type="radio" name="${id}" id="${id}_${i}" data-k="${k}" value="${esc(o)}" ${v === o ? "checked" : ""}>${esc(o)}</label>`).join("")}</div></div>`;
