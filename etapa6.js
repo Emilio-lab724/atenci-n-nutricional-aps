@@ -28,7 +28,34 @@
   };
 
   // ---------------- Prescripción ----------------
-  L.pd_texto = ({ R, D }) => (D.ale_tiene === "Sí" || D.noc_tiene === "Sí" ? `<p class="aviso-g" style="margin:10px 16px 0"><b>Considere al prescribir:</b> ${esc([D.ale_tiene === "Sí" ? "alergias o intolerancias: " + alergiasTxt(D) : "", D.noc_tiene === "Sí" ? "no consume: " + noComeTxt(D) : ""].filter(Boolean).join(". "))}.</p>` : "") + `<p class="concl">${esc(R.PD_Texto)}</p>` + dl([
+  // ---------------- Régimen lactante menor ----------------
+  L.pd_lact = ({ R, D }) => {
+    const X = R.LACT; if (!X) return "";
+    const f1 = (v, d) => (isNum(v) ? f(v, d) : "—");
+    let h = "";
+    const rows = [["Tipo de alimentación", esc(X.tipo) + (X.tipoAuto ? ' <span class="ayuda">(sugerido; cámbielo arriba)</span>' : "")]];
+    if (X.hayFA) rows.push(["Dilución", isNum(X.dil) ? f1(X.dil, 1) + " %" + (isNum(X.dilCalc) ? ` <span class="ayuda">(calculadora: ${f1(X.dilCalc, 1)} %)</span>` : "") : "Ingrese la dilución o use la calculadora (medidas × g/medida ÷ ml × 100)"]);
+    rows.push(["GET (kcal/kg × peso)", isNum(X.GET) ? f(X.GET, 0) + " kcal/día · " + esc(R.Formula_Usada) : "—"]);
+    if (X.hayLM) rows.push(["Aporte y adecuación", "La LM es a libre demanda y no se cuantifica: no se calcula el % de adecuación total."]);
+    else rows.push(["Aporte indicado", isNum(X.kcal) ? f(X.kcal, 0) + " kcal/día" : "—"], ["% de adecuación", isNum(X.adec) ? f(X.adec, 1) + " % · " + pill(X.nomKcal) : "—"]);
+    if (X.hayAC) rows.push(["Energía de la alimentación complementaria", f(X.kcalAC, 0) + " kcal" + (isNum(X.pctAC) ? " (" + f(X.pctAC, 0) + " % del aporte; máx. 50 %)" : "") + (isNum(X.metaAC) ? ` <span class="ayuda">Guía p. 39: ~${X.metaAC} kcal/día de AC a esta edad</span>` : "")]);
+    if (!X.hayLM) {
+      rows.push(["Proteínas", isNum(X.prot) ? f(X.prot, 1) + " g · " + f(X.protKg, 2) + " g/kg · " + f(X.protPct, 1) + " % · " + pill(X.nomProt) : '<span class="ayuda">Ingrese las proteínas por 100 ml / 100 g para clasificar</span>'],
+        ["Lípidos", isNum(X.lip) ? f(X.lip, 1) + " g · " + f(X.lipPct, 1) + " % · " + pill(X.nomLip) : '<span class="ayuda">Ingrese los lípidos por 100 ml / 100 g para clasificar</span>']);
+    }
+    rows.push(["VHT", isNum(X.VHT) ? f(X.VHT, 0) + " ml/día (" + X.VHT_mlkg + " ml/kg × peso real)" : "—"], ["Líquidos indicados (fórmula + agua)", X.liq ? f(X.liq, 0) + " ml/día" : "—"],
+      ["Suplementación", "Vitamina D 400 UI/día (Guía p. 74)" + (X.fe ? " · hierro 1 mg/kg/día" + (isNum(X.feDosis) ? " = " + f(X.feDosis, 1) + " mg/día" : "") + " (LM exclusiva al pecho desde los 4 meses, Guía p. 73)" : "")]);
+    h += dl(rows);
+    h += nota("Nomenclatura del Consenso DMIA USS 2024: adecuación &lt; 90 % hipo · 90-110 % normo · &gt; 110 % hipercalórico. Proteínas " + esc(X.rangoProt) + ". Lípidos " + esc(X.rangoLip) + ".");
+    if (X.hayAC && (!isNum(D.lm_pap_kcal) || !isNum(D.lm_pos_kcal))) h += `<p class="sec-nota verif-n">⚠ verificar: papilla y postre usan 65 kcal/100 g si no se escribe otro valor (Guía p. 39: 65-70 kcal/100 g; el Anexo 1 suma 180 kcal en 200 g de papilla).</p>`;
+    if (X.avisos.length) h += `<div class="aviso-g" style="margin:6px 16px 10px">${X.avisos.map((a) => "• " + esc(a)).join("<br>")}</div>`;
+    if (X.filas.length) h += `<h4 class="sub">Distribución por toma</h4><div class="tabla-w" style="padding:6px 16px 10px"><table class="pr res"><thead><tr><th>Hora</th><th>Tipo</th><th>Cantidad</th><th>kcal</th></tr></thead><tbody>`
+      + X.filas.map((r) => `<tr><td class="num">${esc(r.hora || "—")}</td><td>${esc(r.tipo)}</td><td>${esc(r.cant)}</td><td class="num">${isNum(r.kcal) ? f(r.kcal, 0) : "—"}</td></tr>`).join("") + `</tbody></table></div>`;
+    return h;
+  };
+  L.pd_texto = ({ R, D }) => R.LACT ? `<p class="concl">${esc(R.PD_Texto)}</p>` + (R.PD_Manual ? nota("Se muestra la PD escrita a mano. Borre el ajuste manual para volver a la automática.") : "")
+    + `<div class="acciones" style="padding:0 16px 12px"><button class="btn peq" data-a="copiar-txt" data-txt="${esc(R.PD_Texto)}">Copiar PD</button>${R.PD_Manual ? "" : ` <button class="btn peq" data-a="pd-editar">Editar a partir de la automática</button>`}</div>` : PD_GENERAL({ R, D });
+  const PD_GENERAL = ({ R, D }) => (D.ale_tiene === "Sí" || D.noc_tiene === "Sí" ? `<p class="aviso-g" style="margin:10px 16px 0"><b>Considere al prescribir:</b> ${esc([D.ale_tiene === "Sí" ? "alergias o intolerancias: " + alergiasTxt(D) : "", D.noc_tiene === "Sí" ? "no consume: " + noComeTxt(D) : ""].filter(Boolean).join(". "))}.</p>` : "") + `<p class="concl">${esc(R.PD_Texto)}</p>` + dl([
     ["Energía", isNum(R.GET_Final) ? f(R.GET_Final, 0) + " kcal/día · " + f(R.Kcal_Kg, 1) + " kcal/kg" : "—"],
     ["Proteínas", isNum(R.Prot_g) ? f(R.Prot_g, 1) + " g · " + f(R.Prot_Gkg, 2) + " g/kg · " + f(R.Prot_Pct, 0) + " %" : "—"],
     ["Lípidos", isNum(R.Lip_g) ? f(R.Lip_g, 1) + " g · " + f(+R.Lip_Pct, 0) + " %" : "—"],

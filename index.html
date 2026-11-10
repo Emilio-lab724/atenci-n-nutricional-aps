@@ -479,12 +479,12 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 </div>
 <footer class="pie-autor" id="pieAutor"></footer>
 
-<script src="calc.js?v=23"></script>
+<script src="calc.js?v=24"></script>
 <script src="etapa2.js?v=12"></script>
 <script src="etapa3.js?v=7"></script>
 <script src="etapa4.js?v=1"></script>
 <script src="etapa5.js?v=2"></script>
-<script src="etapa6.js?v=11"></script>
+<script src="etapa6.js?v=12"></script>
 <script src="etapa7.js?v=2"></script>
 <script src="excel.js?v=3"></script>
 <script>
@@ -500,13 +500,17 @@ function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return
 function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ---------- datos ----------
-const VERSION_DATOS = "19";
+const VERSION_DATOS = "20";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.7";
+const APP_VERSION = "2026-11-10.8";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.8", fecha: "10-11-2026", items: [
+    "Prescripción dietética del lactante menor (0 a 11 meses 29 días): «Régimen lactante menor», sin consistencia, digestibilidad, colaciones ni pauta de intercambio. Se indica el tipo de alimentación (LME, LM + FA, FA, LM + AC, FA + AC), la fórmula con su dilución (con calculadora), el volumen y los horarios de las tomas, la papilla, el postre y el agua.",
+    "Calcula el GET por kcal/kg × peso, el aporte, el % de adecuación (hipo, normo o hipercalórico), las proteínas y los lípidos cuando se ingresan sus valores por 100 ml / 100 g, el VHT (150 o 130 ml/kg) y la suplementación (vitamina D; hierro con LM exclusiva desde los 4 meses).",
+    "Avisos de la Guía de Alimentación del menor de 2 años: AC o fórmula de continuación antes de los 6 meses, LPF o leche de vaca antes del año, AC sobre el 50 % de la energía, dilución fuera de 13-15 %, volumen por toma y segunda papilla antes de los 8 meses. La distribución por tiempo de comida se reemplaza por una tabla por toma."] },
   { v: "2026-11-10.7", fecha: "10-11-2026", items: [
     "La prescripción dietética se puede editar igual que el DNI: botón «Editar a partir de la automática» y cuadro de ajuste manual. Se borra al crear un control nuevo.",
     "Edad para la evaluación nutricional (Patrones de crecimiento p. 10): 16 días o más pasan al mes siguiente y 0 a 15 días quedan en el mes cumplido. Ejemplo: 7 años 11 meses 16 días se evalúa como 96 meses (8 años). Se usa en curvas, tablas por edad, grupos etarios y requerimientos. En Datos del paciente se sigue viendo la edad exacta."] },
@@ -671,6 +675,9 @@ const condSec = {
   adolescente: (R) => R.GrupoEtario === "Adolescente",
   pc_activa: (R) => !!(R.PC && R.PC.activa),
   no_lactante: (R) => !esLactante(R),
+  lact_menor: (R) => R.Ciclo === "NNA" && !R.Embarazada && R.GrupoEtario === "Lactante menor",
+  lact_menor_ac: (R) => R.Ciclo === "NNA" && !R.Embarazada && R.GrupoEtario === "Lactante menor" && !!R.LACT && /AC/.test(R.LACT.tipo),
+  no_lact_menor: (R) => !(R.Ciclo === "NNA" && !R.Embarazada && R.GrupoEtario === "Lactante menor"),
   nna_dientes: (R) => R.Ciclo === "NNA" && typeof R.EdadEv_M === "number" && R.EdadEv_M >= 6,
   prev15: (R) => typeof R.Edad_Anios === "number" && R.Edad_Anios >= 15,
   familia: () => { const v = st.p ? datos().so_vive : ""; return !vacio(v) && v !== "Solo/a" && !/^Institución/.test(v); },
@@ -725,6 +732,11 @@ const condCampo = {
 // En lactantes no se muestran antecedentes ni hábitos de adulto
 for (const k of ["ant_dm2", "ant_hta", "ant_dlp", "ant_ecv", "ant_htaref", "ant_trathta", "ant_tratlip", "actividad"]) condCampo[k] = (R) => !esLactante(R);
 // Etapa 3: ajustes que solo aplican en adulto / adulto mayor o en parálisis cerebral
+for (const k of ["pd_consist", "pd_digest", "pd_horario", "pd_frac_h", "pd_temp", "pd_restr"]) condCampo[k] = (R) => !R.LACT;
+// Régimen lactante menor: campos según tipo de alimentación
+const lmTipo = (R) => (R.LACT ? R.LACT.tipo : "");
+for (const k of ["lm_form", "lm_med_n", "lm_g_med", "lm_ml_agua", "lm_dil", "lm_kcal", "lm_prot", "lm_lip", "lm_ml", "lm_n", "lm_hor"]) condCampo[k] = (R) => /FA/.test(lmTipo(R));
+for (const k of ["lm_pap_g", "lm_pap_n", "lm_pap_hor", "lm_pap_kcal", "lm_pap_prot", "lm_pap_lip", "lm_pos_g", "lm_pos_n", "lm_pos_hor", "lm_pos_kcal", "lm_pos_prot", "lm_pos_lip", "lm_agua_ml", "lm_agua_n"]) condCampo[k] = (R) => /AC/.test(lmTipo(R));
 for (const k of ["req_kcalkg", "req_factor_pat"]) condCampo[k] = (R) => R.Ciclo === "AD" || R.Ciclo === "AM";
 condCampo.req_factor = (R) => R.Ciclo === "AD" || R.Ciclo === "AM" || (R.Ciclo === "NNA" && R.EdadEv_A !== "" && R.EdadEv_A >= 1);
 condCampo.req_pc_meta_meses = (R) => !!(R.PC && R.PC.activa);
@@ -1044,6 +1056,7 @@ function renderModulo() {
   secs.forEach((s, i) => {
     // Consulta flash: solo preguntas esenciales; se omiten las secciones que quedan sin preguntas ni resultados
     const ess = (s.c || []).filter(esEsencial), opc = (s.c || []).filter((k) => !esEsencial(k));
+    if (flash && s.soloCompleta && s.cuando !== "todos" && condSec[s.cuando] && !condSec[s.cuando](R)) return;
     if (flash && s.soloCompleta) { ocultas += (s.c || []).length; soloComp.push(s.t); return; }
     if (flash) { ocultas += opc.length; if (/\(opcional\)/.test(s.t)) { ocultas += ess.length; return; } if (!ess.length && !s.calc && !s.live && !s.tabla) return; }
     h += `<section class="sec" data-sec="${i}" data-cuando="${s.cuando}"><h3>${esc(s.t)}</h3>${s.nota ? `<p class="sec-nota">${esc(s.nota)}</p>` : ""}`;
@@ -1450,7 +1463,7 @@ function renderPanel(R) {
     <div><span>Peso para requerimientos</span>${g ? pend(7) : typeof R.Peso_Usado === "number" ? `<b>${esc(R.PesoTipo)} · <span class="num">${Etapa2.fmt(R.Peso_Usado, 1)} kg</span></b>` : '<b class="pend">Ingrese peso y talla</b>'}</div>
     <div><span>GET</span>${g ? pend(7) : typeof R.GET_Final === "number" ? `<b><span class="num">${R.GET_Final.toLocaleString("es-CL")} kcal/día</span> · ${esc(R.Nom_Kcal)}</b>` : '<b class="pend">Falta peso</b>'}</div>
     <div><span>Macronutrientes (P · L · CHO)</span>${g ? pend(7) : typeof R.Prot_g === "number" && typeof R.CHO_g === "number" ? `<b class="num">${Etapa2.fmt(R.Prot_g, 1)} · ${Etapa2.fmt(R.Lip_g, 1)} · ${Etapa2.fmt(R.CHO_g, 1)} g</b>` : '<b class="pend">—</b>'}</div>
-    <div><span>VHT</span>${g ? pend(7) : typeof R.VHT === "number" ? `<b class="num">${R.VHT.toLocaleString("es-CL")} ml/día · ${Etapa2.fmt(R.VHT_Vasos, 1)} vasos</b>` : '<b class="pend">—</b>'}</div>
+    <div><span>VHT</span>${g ? pend(7) : R.LACT && typeof R.LACT.VHT === "number" ? `<b class="num">${R.LACT.VHT.toLocaleString("es-CL")} ml/día · ${R.LACT.VHT_mlkg} ml/kg</b>` : typeof R.VHT === "number" ? `<b class="num">${R.VHT.toLocaleString("es-CL")} ml/día · ${Etapa2.fmt(R.VHT_Vasos, 1)} vasos</b>` : '<b class="pend">—</b>'}</div>
     <div><span>Ingesta R24</span>${R.Rec24_Kcal > 0 ? `<b><span class="num">${Math.round(R.Rec24_Kcal).toLocaleString("es-CL")} kcal</span>${typeof R.Adec24_Energia === "number" ? ` · ${Math.round(R.Adec24_Energia)} % · ${esc(R.Cls24_Energia.toLowerCase())}` : ""}</b>` : '<b class="pend">Sin registro</b>'}</div>
     <div><span>DNI</span>${g ? pend(7) : R.DNI ? `<b class="dni-panel">${esc(R.DNI.length > 230 ? R.DNI.slice(0, 230) + "…" : R.DNI)}</b>` : '<b class="pend">Faltan datos</b>'}</div>
   </div>

@@ -420,7 +420,9 @@
       R.EdadEv_A < 6 ? "Preescolar" : R.EdadEv_A < 10 ? "Escolar" : "Adolescente";
     R.Actividad = vacio(D.actividad) ? "Ligera" : D.actividad;
     actividadPC(D, R, T);
-    R.Alim_Lact = vacio(D.alim_lact) ? "Lactancia materna" : D.alim_lact;
+    // Si no se marcó el tipo de alimentación en Datos, se toma del régimen del lactante (PD)
+    const lmT = S(D.lm_tipo);
+    R.Alim_Lact = !vacio(D.alim_lact) ? D.alim_lact : PLANILLA || lmT === "" ? "Lactancia materna" : /FA/.test(lmT) && /LM/.test(lmT) ? "Mixta" : /FA/.test(lmT) ? "Fórmula láctea" : "Lactancia materna";
     const ap = D.fam_apgar;
     R.APGAR_Cls = vacio(ap) ? "" : ap >= 7 ? "Altamente funcional" : ap >= 4 ? "Moderadamente funcional" : "Severamente disfuncional";
 
@@ -684,7 +686,7 @@
     // --- requerimiento seleccionado ---
     // Decisión docente (07-11-2026): de 5 a 9 años, método rápido kcal/kg ± 15 % según actividad; adolescentes (≥ 10 años), GEB OMS × PAL
     const rapido59 = !PLANILLA && !pc && GE(edad, 5) && LT(edad, 10) && isNum(edad) && F[4].aplica === "Sí";
-    E.Sugerida = nna ? (LT(aprox, 12) ? F[0].nombre : pc ? (F[7].aplica === "Sí" ? F[7].nombre : F[3].nombre) : rapido59 ? F[4].nombre : F[3].nombre) : C === "" ? "" : F[11].nombre;
+    E.Sugerida = nna ? (LT(aprox, 12) ? (PLANILLA ? F[0].nombre : F[1].nombre) : pc ? (F[7].aplica === "Sí" ? F[7].nombre : F[3].nombre) : rapido59 ? F[4].nombre : F[3].nombre) : C === "" ? "" : F[11].nombre;
     const fin = S(D.req_formula);
     R.Formula_Usada = fin !== "" && fx(fin) && fx(fin).aplica === "Sí" ? fin : E.Sugerida;
     R.GET_Calc = fx(R.Formula_Usada) ? fx(R.Formula_Usada).get : "—";
@@ -1287,6 +1289,102 @@
     ["Alimentos ricos en lípidos", [1, 0, 0, 1, 0, 0]], ["Azúcares", [1, 0, 0, 1, 0, 0]]];
   const DIST0 = [20, 5, 25, 20, 25, 5];
 
+  // ---------- Régimen lactante menor (decisión docente 10-11-2026) ----------
+  // Guía de Alimentación del Niño/a menor de 2 años (MINSAL): dilución 13-15 % (p. 35 y 40), ~200 ml por toma a los 5 meses y 140-160 ml/kg/día (p. 35),
+  // AC alrededor de los 6 meses, ≤ 50 % de la energía y 65-70 kcal/100 g (p. 38-39), 2.ª papilla ~8 meses y postre hasta 100 ml (p. 42), agua 50 ml 3-4 veces (p. 44),
+  // vitamina D 400 UI el primer año (p. 74) y hierro 1 mg/kg/día con LM exclusiva al pecho desde los 4 meses (p. 73).
+  // Nomenclatura: Consenso DMIA USS 2024 (adecuación < 90 / 90-110 / > 110 %; proteínas y lípidos por tramo de edad). VHT 150 ml/kg (< 6 m) o 130 ml/kg (≥ 6 m) con peso real.
+  const LM_KCAL_AC = 65; // kcal/100 g sugeridas para papilla y postre (Guía p. 39: 65-70 kcal/100 g) ⚠ editable
+  function regimenLactante(D, R) {
+    const L = { avisos: [], filas: [] }, n = (k) => numD(D[k]), em = R.EdadEv_M, nt = (v, d) => (isNum(v) ? String(+(+v).toFixed(d === undefined ? 1 : d)).replace(".", ",") : "—");
+    const enteros = (k) => (isNum(n(k)) ? n(k) : "");
+    L.tipo = S(D.lm_tipo) || (R.Alim_Lact === "Fórmula láctea" ? (em < 6 ? "FA" : "FA + AC") : R.Alim_Lact === "Mixta" ? "LM + FA" : em < 6 ? "LME" : "LM + AC");
+    L.tipoAuto = S(D.lm_tipo) === "";
+    L.hayLM = /LM/.test(L.tipo); L.hayFA = /FA/.test(L.tipo); L.hayAC = /AC/.test(L.tipo);
+    L.form = S(D.lm_form) || "Fórmula de inicio";
+    // dilución: calculadora (medidas × g/medida ÷ ml × 100) o valor escrito
+    L.dilCalc = isNum(n("lm_med_n")) && isNum(n("lm_g_med")) && n("lm_ml_agua") > 0 ? n("lm_med_n") * n("lm_g_med") / n("lm_ml_agua") * 100 : "";
+    L.dil = isNum(n("lm_dil")) ? n("lm_dil") : isNum(L.dilCalc) ? xround(L.dilCalc, 1) : "";
+    const comp = (pre, kcalDef) => {
+      const c = { cant: enteros(pre === "lm" ? "lm_ml" : pre + "_g"), veces: enteros(pre === "lm" ? "lm_n" : pre + "_n"), hor: S(D[(pre === "lm" ? "lm" : pre) + "_hor"]),
+        k100: isNum(n(pre + "_kcal")) ? n(pre + "_kcal") : kcalDef, p100: n(pre + "_prot"), l100: n(pre + "_lip") };
+      c.total = isNum(c.cant) && isNum(c.veces) ? c.cant * c.veces : "";
+      c.kcal = isNum(c.total) && isNum(c.k100) ? c.total * c.k100 / 100 : "";
+      c.prot = isNum(c.total) && isNum(c.p100) ? c.total * c.p100 / 100 : "";
+      c.lip = isNum(c.total) && isNum(c.l100) ? c.total * c.l100 / 100 : "";
+      return c;
+    };
+    L.F = L.hayFA ? comp("lm", "") : null;
+    L.P = L.hayAC ? comp("lm_pap", LM_KCAL_AC) : null;
+    L.Q = L.hayAC ? comp("lm_pos", LM_KCAL_AC) : null;
+    L.agua = { cant: enteros("lm_agua_ml"), veces: enteros("lm_agua_n") }; L.agua.total = isNum(L.agua.cant) && isNum(L.agua.veces) ? L.agua.cant * L.agua.veces : "";
+    const usados = [L.F, L.P, L.Q].filter((c) => c && isNum(c.total) && c.total > 0);
+    L.kcal = usados.length && usados.every((c) => isNum(c.kcal)) ? usados.reduce((a, c) => a + c.kcal, 0) : "";
+    L.kcalAC = [L.P, L.Q].filter(Boolean).reduce((a, c) => a + (isNum(c.kcal) ? c.kcal : 0), 0);
+    L.GET = R.GET_Final;
+    // Adecuación: solo si no hay LM (la LM es a libre demanda y no se cuantifica)
+    L.adec = !L.hayLM && isNum(L.kcal) && L.GET > 0 ? L.kcal / L.GET * 100 : "";
+    L.nomKcal = isNum(L.adec) ? (L.adec < 90 ? "Hipocalórico" : L.adec <= 110 ? "Normocalórico" : "Hipercalórico") : "";
+    L.pctAC = isNum(L.kcal) && L.kcal > 0 && L.kcalAC > 0 ? L.kcalAC / L.kcal * 100 : "";
+    L.metaAC = em >= 6 && em < 9 ? 200 : em >= 9 && em < 12 ? 300 : "";
+    const todos = (k) => usados.length && usados.every((c) => isNum(c[k]));
+    L.prot = !L.hayLM && todos("prot") ? usados.reduce((a, c) => a + c.prot, 0) : "";
+    L.lip = !L.hayLM && todos("lip") ? usados.reduce((a, c) => a + c.lip, 0) : "";
+    L.protPct = isNum(L.prot) && L.kcal > 0 ? L.prot * 4 / L.kcal * 100 : "";
+    L.lipPct = isNum(L.lip) && L.kcal > 0 ? L.lip * 9 / L.kcal * 100 : "";
+    L.protKg = isNum(L.prot) && R.Peso > 0 ? L.prot / R.Peso : "";
+    const m6 = em < 6;
+    L.nomProt = isNum(L.protPct) ? (L.protPct < 6 ? "Hipoproteico" : L.protPct > (m6 ? 8 : 10) ? "Hiperproteico" : "Normoproteico") : "";
+    L.rangoProt = m6 ? "< 6 % hipo · 6-8 % (2,2 g/kg) normo · > 8 % hiper" : "< 6 % hipo · 6-8 % (1,6 g/kg) normo · > 10 % hiper";
+    const lipR = m6 ? (L.hayFA && !L.hayLM ? [40, 45] : [50, 55]) : [35, 40];
+    L.nomLip = isNum(L.lipPct) ? (L.lipPct < lipR[0] ? "Hipolipídico" : L.lipPct > lipR[1] ? "Hiperlipídico" : "Normolipídico") : "";
+    L.rangoLip = lipR[0] + "-" + lipR[1] + " % normolipídico";
+    // VHT y volumen líquido
+    L.VHT_mlkg = m6 ? 150 : 130;
+    L.VHT = R.Peso > 0 ? xround(L.VHT_mlkg * R.Peso, 0) : "";
+    L.liq = (L.F && isNum(L.F.total) ? L.F.total : 0) + (isNum(L.agua.total) ? L.agua.total : 0);
+    // Suplementos (Guía p. 73-74)
+    L.vitD = true;
+    L.fe = L.hayLM && !L.hayFA && em >= 4;
+    L.feDosis = L.fe && R.Peso > 0 ? xround(R.Peso * 1, 1) : "";
+    // Avisos
+    const av = (t) => L.avisos.push(t);
+    if ((L.hayAC || (L.P && isNum(L.P.total))) && em < 6) av("Alimentación complementaria antes de los 6 meses (Guía p. 38: se incorpora alrededor de los 6 meses).");
+    if (L.hayFA && L.form === "Fórmula de continuación" && em < 6) av("Fórmula de continuación antes de los 6 meses: en menores de 6 meses se usa fórmula de inicio (Guía p. 35 y 40).");
+    if (L.hayFA && /LPF|vaca/i.test(L.form)) av(L.form + " en menor de 1 año: se indica fórmula de inicio (Guía p. 40: la fórmula de inicio es útil durante todo el primer año).");
+    if (isNum(L.pctAC) && L.pctAC > 50) av("La alimentación complementaria aporta " + nt(L.pctAC, 0) + " % de la energía: no debería superar el 50 % (Guía p. 39).");
+    if (L.hayFA && isNum(L.dil) && (L.dil < 13 || L.dil > 15)) av("Dilución " + nt(L.dil) + " %: la Guía indica 13-15 % según el envase (p. 35 y 40).");
+    if (L.F && isNum(L.F.cant) && L.F.cant > 200) av("Volumen por toma " + L.F.cant + " ml: la Guía llega a ~200 ml por vez a los 5 meses (p. 35). ⚠ verificar");
+    if (L.F && isNum(L.F.total) && !L.hayLM && !L.hayAC && m6 && R.Peso > 0) { const mk = L.F.total / R.Peso; if (mk < 140 || mk > 160) av("Fórmula " + nt(mk, 0) + " ml/kg/día: la Guía indica 140-160 ml/kg/día (p. 35)."); }
+    if (L.P && isNum(L.P.veces) && L.P.veces >= 2 && em < 8) av("Segunda papilla antes de los 8 meses (Guía p. 42: alrededor de los 8 meses).");
+    if (L.Q && isNum(L.Q.cant) && L.Q.cant > 100) av("Postre de " + L.Q.cant + " g: la Guía indica hasta 100 ml (½ taza) por vez (p. 42).");
+    if (L.hayFA && !isNum(n("lm_kcal"))) av("Falta la energía de la fórmula (kcal por 100 ml a la dilución indicada, según la etiqueta del envase) para calcular el aporte y la adecuación.");
+    // Tabla por toma / comida
+    const horas = (txt) => (String(txt || "").match(/\d{1,2}(?::\d{2})?/g) || []);
+    const hnum = (h) => { const [a, b] = String(h).split(":"); return +a + (b ? +b / 60 : 0); };
+    const add = (tipo, c, unidad) => { if (!c || !isNum(c.cant) || !isNum(c.veces)) return; const hs = horas(c.hor);
+      for (let i = 0; i < c.veces; i++) L.filas.push({ hora: hs[i] || "", tipo, cant: c.cant + " " + unidad, kcal: isNum(c.k100) ? c.cant * c.k100 / 100 : "" }); };
+    if (L.hayLM) L.filas.push({ hora: "", tipo: L.hayFA || L.hayAC ? "Lactancia materna" : "Lactancia materna exclusiva", cant: "Libre demanda", kcal: "" });
+    add(L.form + (isNum(L.dil) ? " " + nt(L.dil) + " %" : ""), L.F, "ml"); add("Papilla", L.P, "g"); add("Postre", L.Q, "g");
+    if (isNum(L.agua.cant) && isNum(L.agua.veces)) for (let i = 0; i < L.agua.veces; i++) L.filas.push({ hora: "", tipo: "Agua", cant: L.agua.cant + " ml", kcal: "" });
+    L.filas.sort((a, b) => (a.hora === "" ? 99 : hnum(a.hora)) - (b.hora === "" ? 99 : hnum(b.hora)));
+    // Enunciado (Guía, ej. de la estudiante): «Régimen lactante menor: fórmula de inicio al 13,5 %, 165 ml × 3 veces (7 – 15 – 23) + papilla …»
+    const hTxt = (h) => { const hs = horas(h); return !hs.length ? "" : " (" + (hs.length === 2 ? hs.join(" y ") : hs.join(" – ")) + ")"; };
+    const vz = (v) => v + (v === 1 ? " vez" : " veces");
+    const partes = [];
+    if (L.hayLM) partes.push(L.tipo === "LME" ? "lactancia materna exclusiva a libre demanda" : "lactancia materna a libre demanda");
+    if (L.hayFA) partes.push(lower(L.form) + (isNum(L.dil) ? " al " + nt(L.dil) + " %" : "") + (isNum(L.F.cant) && isNum(L.F.veces) ? ", " + L.F.cant + " ml × " + vz(L.F.veces) + hTxt(L.F.hor) : ""));
+    if (L.P && isNum(L.P.cant) && isNum(L.P.veces)) partes.push("papilla " + L.P.cant + " g × " + vz(L.P.veces) + hTxt(L.P.hor));
+    if (L.Q && isNum(L.Q.cant) && isNum(L.Q.veces)) partes.push("postre " + L.Q.cant + " g × " + vz(L.Q.veces) + hTxt(L.Q.hor));
+    if (isNum(L.agua.cant) && isNum(L.agua.veces)) partes.push("agua " + L.agua.cant + " ml × " + vz(L.agua.veces));
+    const noms = [L.nomKcal, L.nomProt, L.nomLip].filter(Boolean).map(lower);
+    const supl = "suplementado en vitamina D" + (L.fe ? " y hierro" : "");
+    const extra = S(D.pd_supl);
+    L.texto = "Régimen lactante menor: " + partes.join(" + ") + ". " + (noms.length ? noms.join(", ").replace(/^./, (c) => c.toUpperCase()) + ". " : "")
+      + "Volúmenes " + lower(R.PD_Vol || "Normales") + ", " + supl + (extra ? ", " + extra : "") + ".";
+    return L;
+  }
+
   function prescripcion(D, R, T) {
     const t4 = T && T.t4, C = R.Ciclo, nna = C === "NNA", ea = R.EdadEv_A, P = R.PD = {};
     R.PD_Consist = vacio(D.pd_consist) ? "Normal" : D.pd_consist; R.PD_Digest = vacio(D.pd_digest) ? "Común" : D.pd_digest; R.PD_Vol = vacio(D.pd_vol) ? "Normales" : D.pd_vol;
@@ -1313,6 +1411,8 @@
       } catch (e) { return "Faltan datos para la prescripción"; }
     };
     R.PD_Auto = textoPD(false); R.PD_Texto_Planilla = textoPD(true);
+    R.LACT = null;
+    if (!PLANILLA && nna && !R.Embarazada && R.GrupoEtario === "Lactante menor") { R.LACT = regimenLactante(D, R); if (R.LACT.texto) R.PD_Auto = R.LACT.texto; }
     R.PD_Manual = S(D.pd_manual); // PD escrita a mano (como el DNI): reemplaza a la automática
     R.PD_Texto = R.PD_Manual !== "" ? R.PD_Manual : R.PD_Auto;
     // pauta en porciones de intercambio
