@@ -479,12 +479,12 @@ table.pr td.v { font-family: var(--mono); font-size: 12.5px; white-space: pre-wr
 </div>
 <footer class="pie-autor" id="pieAutor"></footer>
 
-<script src="calc.js?v=22"></script>
-<script src="etapa2.js?v=11"></script>
-<script src="etapa3.js?v=6"></script>
+<script src="calc.js?v=23"></script>
+<script src="etapa2.js?v=12"></script>
+<script src="etapa3.js?v=7"></script>
 <script src="etapa4.js?v=1"></script>
-<script src="etapa5.js?v=1"></script>
-<script src="etapa6.js?v=10"></script>
+<script src="etapa5.js?v=2"></script>
+<script src="etapa6.js?v=11"></script>
 <script src="etapa7.js?v=2"></script>
 <script src="excel.js?v=3"></script>
 <script>
@@ -500,13 +500,16 @@ function fechaCL(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return
 function nuevoId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
 // ---------- datos ----------
-const VERSION_DATOS = "18";
+const VERSION_DATOS = "19";
 // Versión de la app: al publicar cambios se sube APP_VERSION aquí y en version.json, y se agrega una entrada en CAMBIOS
-const APP_VERSION = "2026-11-10.6";
+const APP_VERSION = "2026-11-10.7";
 // Autoría (se muestra al pie de la app, en las hojas impresas y en los Excel exportados)
 const AUTORIA = "© 2026 Emilio Alejandro Espinoza Sotomayor · Estudiante de Nutrición y Dietética, Universidad San Sebastián, sede De la Patagonia · Todos los derechos reservados. Prohibida su reproducción, distribución o modificación, total o parcial, sin autorización escrita del autor.";
 window.AUTORIA = AUTORIA;
 const CAMBIOS = [
+  { v: "2026-11-10.7", fecha: "10-11-2026", items: [
+    "La prescripción dietética se puede editar igual que el DNI: botón «Editar a partir de la automática» y cuadro de ajuste manual. Se borra al crear un control nuevo.",
+    "Edad para la evaluación nutricional (Patrones de crecimiento p. 10): 16 días o más pasan al mes siguiente y 0 a 15 días quedan en el mes cumplido. Ejemplo: 7 años 11 meses 16 días se evalúa como 96 meses (8 años). Se usa en curvas, tablas por edad, grupos etarios y requerimientos. En Datos del paciente se sigue viendo la edad exacta."] },
   { v: "2026-11-10.6", fecha: "10-11-2026", items: [
     "Anamnesis clínica: sección «Deposiciones» (frecuencia y escala de Bristol; en lactantes también color y consistencia) para todos los ciclos vitales, también en la consulta flash.",
     "NNA desde los 6 meses: sección «Salud bucal y control con dentista». Si no está al día o nunca ha ido, se sugiere derivar a odontólogo en Seguimiento. Ambos datos salen en el resumen."] },
@@ -668,11 +671,11 @@ const condSec = {
   adolescente: (R) => R.GrupoEtario === "Adolescente",
   pc_activa: (R) => !!(R.PC && R.PC.activa),
   no_lactante: (R) => !esLactante(R),
-  nna_dientes: (R) => R.Ciclo === "NNA" && typeof R.Edad_Meses === "number" && R.Edad_Meses >= 6,
+  nna_dientes: (R) => R.Ciclo === "NNA" && typeof R.EdadEv_M === "number" && R.EdadEv_M >= 6,
   prev15: (R) => typeof R.Edad_Anios === "number" && R.Edad_Anios >= 15,
   familia: () => { const v = st.p ? datos().so_vive : ""; return !vacio(v) && v !== "Solo/a" && !/^Institución/.test(v); },
 };
-const esLactante = (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 24;
+const esLactante = (R) => typeof R.EdadEv_M === "number" && R.EdadEv_M < 24;
 // En una gestante adolescente no se muestran las preguntas pensadas para el niño (perinatales, cuidado, Tanner, lactancia)
 const OCULTAR_EMB = new Set(["NNA", "NNA_mayor1", "NNA_mayor2", "escolar_adol", "lactante", "mujer_fertil"]);
 // Preguntas esenciales: las de las planillas (alimentan cálculos, alertas o el DNI) y las del portafolio que también entran en un cálculo o alerta.
@@ -692,7 +695,7 @@ const condCampo = {
   noc_motivo: (R, D) => D.noc_tiene === "Sí",
   noc_det: (R, D) => D.noc_tiene === "Sí",
   ant_erc_etapa: (R, D) => D.ant_erc === "Sí",
-  alim_lact: (R) => typeof R.Edad_Meses === "number" && R.Edad_Meses < 12 && R.Ciclo === "NNA",
+  alim_lact: (R) => typeof R.EdadEv_M === "number" && R.EdadEv_M < 12 && R.Ciclo === "NNA",
   so_estres_txt: (R, D) => D.so_estres === "Sí",
   so_red_txt: (R, D) => D.so_red === "Sí",
   px_chupete: (R) => R.GrupoEtario === "Preescolar",
@@ -714,7 +717,7 @@ const condCampo = {
   pantorrilla: (R) => R.Ciclo === "AM", alt_rodilla: (R) => R.Ciclo === "AM", usar_talla_rodilla: (R) => R.Ciclo === "AM",
   ascitis: (R) => R.Ciclo === "AD" || R.Ciclo === "AM", edema: (R) => R.Ciclo === "AD" || R.Ciclo === "AM",
   peso_hab: (R) => R.Ciclo !== "NNA", tiempo_cambio: (R) => R.Ciclo !== "NNA",
-  cc: (R) => R.Ciclo !== "NNA" || (typeof R.Edad_Anios === "number" && R.Edad_Anios >= 5),
+  cc: (R) => R.Ciclo !== "NNA" || (typeof R.EdadEv_A === "number" && R.EdadEv_A >= 5),
   px_vacunas_motivo: (R, D) => D.px_vacunas === "No", px_hosp_det: (R, D) => D.px_hosp === "Sí", px_probio_cual: (R, D) => D.px_probio === "Sí", px_rx_det: (R, D) => D.px_rx_pelvis === "Alterada",
   px_curso: (R, D) => !!D.px_estab && D.px_estab !== "No asiste", px_jornada: (R, D) => !!D.px_estab && D.px_estab !== "No asiste",
   so_colegio: (R, D) => !vacio(D.so_colegio) && vacio(D.px_estab),
@@ -723,7 +726,7 @@ const condCampo = {
 for (const k of ["ant_dm2", "ant_hta", "ant_dlp", "ant_ecv", "ant_htaref", "ant_trathta", "ant_tratlip", "actividad"]) condCampo[k] = (R) => !esLactante(R);
 // Etapa 3: ajustes que solo aplican en adulto / adulto mayor o en parálisis cerebral
 for (const k of ["req_kcalkg", "req_factor_pat"]) condCampo[k] = (R) => R.Ciclo === "AD" || R.Ciclo === "AM";
-condCampo.req_factor = (R) => R.Ciclo === "AD" || R.Ciclo === "AM" || (R.Ciclo === "NNA" && R.Edad_Anios !== "" && R.Edad_Anios >= 1);
+condCampo.req_factor = (R) => R.Ciclo === "AD" || R.Ciclo === "AM" || (R.Ciclo === "NNA" && R.EdadEv_A !== "" && R.EdadEv_A >= 1);
 condCampo.req_pc_meta_meses = (R) => !!(R.PC && R.PC.activa);
 const auditVisible = (R, D) => D.alcohol === "Sí" && !(R.Edad_Anios !== "" && R.Edad_Anios < 15);
 for (let i = 1; i <= 10; i++) condCampo["audit_" + String(i).padStart(2, "0")] = auditVisible;
@@ -979,7 +982,7 @@ function campoHTML(k) {
   } else if (f.type === "scored") {
     ctl = `<select id="${id}" data-k="${k}" data-scored><option value="">—</option>${f.scored.map(([t, n]) => `<option value="${n}" ${!vacio(v) && Number(v) === n ? "selected" : ""}>${esc(t)} (${n})</option>`).join("")}</select>`;
   } else if (f.type === "textarea") {
-    ancho = true; ctl = `<textarea id="${id}" data-k="${k}" rows="${k === "dni_manual" ? 4 : 2}">${esc(v || "")}</textarea>`;
+    ancho = true; ctl = `<textarea id="${id}" data-k="${k}" rows="${k === "dni_manual" || k === "pd_manual" ? 4 : 2}">${esc(v || "")}</textarea>`;
   } else if (f.type === "medlist") {
     return `<div class="campo ancho" data-campo="${k}"><span class="lbl">${esc(f.label)}</span>${medsHTML(k)}</div>`;
   } else {
@@ -1305,12 +1308,13 @@ function calcHTML(tipo) {
   if (tipo === "edad") return `<dl class="calc">
     <dt>Edad</dt><dd data-out="Edad_Texto">—</dd>
     <dt>Edad en meses cumplidos</dt><dd class="num" data-out="Edad_Meses">—</dd>
+    <dt>Edad para la evaluación nutricional</dt><dd class="num" data-out="EdadEv_Texto">—</dd>
     <dt>Edad en meses para tablas</dt><dd class="num" data-out="Edad_Meses_Aprox">—</dd>
     <dt>Edad decimal</dt><dd class="num" data-out="Edad_Dec">—</dd>
     <dt>Ciclo vital automático</dt><dd data-out="Ciclo_Auto">—</dd>
     <dt>Ciclo vital usado</dt><dd><b data-out="Ciclo">—</b></dd>
     <dt>Grupo etario</dt><dd data-out="GrupoEtario">—</dd></dl>
-    <p class="sec-nota">Edad en meses para tablas: 16 días o más pasan al mes siguiente (Patrones de crecimiento p. 10). En prematuros se usa la edad corregida cuando corresponde (módulo Prematuro).</p>
+    <p class="sec-nota">Edad para la evaluación nutricional: 16 días o más pasan al mes siguiente; 0 a 15 días quedan en el mes cumplido (Patrones de crecimiento p. 10). Con esta edad se eligen curvas, tablas por edad, grupos etarios y la plantilla de la PD. En prematuros se usa la edad corregida cuando corresponde (módulo Prematuro).</p>
     <p class="sec-nota" data-out="error-fechas" style="color:var(--bad)" hidden></p>`;
   if (tipo === "edadGest") return `<dl class="calc"><dt>Edad</dt><dd data-out="Edad_Texto">—</dd><dt>Edad en años</dt><dd class="num" data-out="Edad_Anios">—</dd></dl>
     <p class="sec-nota" data-out="gest-menor" hidden>Gestante menor de 18 años: para el GEB se usa la ecuación del tramo 18-30 años (etapa 8).</p>
@@ -1352,6 +1356,7 @@ function actualizar() {
   out("Edad_Texto", esc(t(R.Edad_Texto)));
   out("Edad_Anios", esc(t(R.Edad_Anios)));
   out("Edad_Meses", esc(t(R.Edad_Meses)));
+  out("EdadEv_Texto", R.EdadEv_M === "" ? "—" : esc(R.EdadEv_M + " meses (" + R.EdadEv_A + (R.EdadEv_A === 1 ? " año" : " años") + (R.EdadEv_M % 12 ? " " + (R.EdadEv_M % 12) + (R.EdadEv_M % 12 === 1 ? " mes" : " meses") : "") + ")"));
   out("Edad_Meses_Aprox", esc(t(R.Edad_Meses_Aprox)));
   out("Edad_Dec", R.Edad_Dec === "" ? "—" : R.Edad_Dec.toFixed(2).replace(".", ","));
   out("Ciclo_Auto", esc(t(R.Ciclo_Auto)));
@@ -1659,6 +1664,7 @@ $app.addEventListener("click", async (e) => {
   else if (a === "rc-mas") { st.ui.rcn = Math.min(40, r24dNFilas() + 5); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "rc-borrar") { const D = datos(), p = `rc_${pad2(+b.dataset.i)}_`; for (const f of ["tiempo", "hora", "prep", "grupo", "alim", "n", "g"]) delete D[p + f]; programarGuardado(); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "copiar-txt") { try { await navigator.clipboard.writeText(b.dataset.txt); toast("Texto copiado"); } catch (err) { toast("No se pudo copiar"); } }
+  else if (a === "pd-editar") { asignar("pd_manual", calc().PD_Auto); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); const t = document.getElementById("f_pd_manual"); if (t) t.focus(); }
   else if (a === "dni-editar") { asignar("dni_manual", calc().DNI_Auto); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); const t = document.getElementById("f_dni_manual"); if (t) t.focus(); }
   else if (a === "obj-usar") { const D = datos(); const i = [1, 2, 3, 4, 5].find((j) => vacio(D["obj_" + j])); if (!i) { toast("Ya hay 5 objetivos: edite o borre uno"); return; } asignar("obj_" + i, b.dataset.txt); const y = window.scrollY; renderModulo(); actualizar(); window.scrollTo(0, y); }
   else if (a === "guardar-paciente") { clearTimeout(tGuardar); await ejecutarGuardado(); toast(/^Guardado/.test($estado.textContent) ? "Paciente guardado" : $estado.textContent); }
@@ -1687,7 +1693,7 @@ $app.addEventListener("click", async (e) => {
   else if (a === "nuevo-control") {
     const d = JSON.parse(JSON.stringify(datos())); d.feval = hoy(); delete d.reloj;
     for (const k of ["z_previo", "pr_fant", "pr_pant", "pr_tant", "pr_pcant"]) delete d[k];
-    for (const k of Object.keys(d)) if (/^(r24_|rc_|tfc_|nc_|obj_|dni_manual|deriv_libre|metas_habitos)/.test(k)) delete d[k]; // la anamnesis alimentaria, el DNI manual y los objetivos son de cada consulta
+    for (const k of Object.keys(d)) if (/^(r24_|rc_|tfc_|nc_|obj_|dni_manual|pd_manual|deriv_libre|metas_habitos)/.test(k)) delete d[k]; // la anamnesis alimentaria, el DNI manual y los objetivos son de cada consulta
     st.p.controles.push({ id: "c" + (st.p.controles.length + 1), datos: d }); st.ci = st.p.controles.length - 1;
     programarGuardado(); vistaFicha(); toast("Control nuevo creado con los datos del anterior");
   }

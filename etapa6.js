@@ -35,7 +35,8 @@
     ["Hidratos de carbono", isNum(R.CHO_g) ? f(R.CHO_g, 1) + " g · " + f(R.CHO_Pct_Usado, 0) + " %" : "—"],
     ["Fibra · azúcares libres (máx.)", (isNum(R.Fibra_g) ? f(R.Fibra_g, 0) + " g" : "—") + " · " + (isNum(R.Azuc_Max) ? f(R.Azuc_Max, 0) + " g" : "—")],
     ["VHT", isNum(R.VHT) ? f(R.VHT, 0) + " ml/día (" + f(R.VHT_Vasos, 1) + " vasos)" : "—"],
-  ]) + `<div class="acciones" style="padding:0 16px 12px"><button class="btn peq" data-a="copiar-txt" data-txt="${esc(R.PD_Texto)}">Copiar PD</button></div>`
+  ]) + `<div class="acciones" style="padding:0 16px 12px"><button class="btn peq" data-a="copiar-txt" data-txt="${esc(R.PD_Texto)}">Copiar PD</button>${R.PD_Manual ? "" : ` <button class="btn peq" data-a="pd-editar">Editar a partir de la automática</button>`}</div>`
+    + (R.PD_Manual ? nota("Se muestra la PD escrita a mano. Borre el ajuste manual para volver a la automática.") : "")
     + nota("Consenso p. 45: la normalidad se puede omitir salvo en consistencia, digestibilidad, volúmenes, horario y calorías.");
 
   // ---------------- Objetivos (Bloom) ----------------

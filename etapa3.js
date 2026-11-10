@@ -58,7 +58,7 @@
       !nna || isNum(R.PAL_NNA) ? ["Factor de actividad", f2(R.Factor_AF) + " · actividad " + esc(R.Actividad.toLowerCase()) + ' <span class="chip">ligera 1,4 · moderada 1,7 · intensa 2,0</span>'] : null,
       nna ? ["Costo de crecimiento", f0(R.Costo_Crec) + " kcal/día"] : null,
       nna && R.Edad_Meses_Aprox !== "" && R.Edad_Meses_Aprox < 12 ? ["Tipo de alimentación", esc(E.AlimLact)] : null,
-      nna && R.Edad_Anios >= 5 ? ["Ajuste del método rápido (≥ 5 años)", f2(R.Ajuste_Rapido) + " (ligera −15 % · moderada sin ajuste · intensa +15 %)"] : null,
+      nna && R.EdadEv_A >= 5 ? ["Ajuste del método rápido (≥ 5 años)", f2(R.Ajuste_Rapido) + " (ligera −15 % · moderada sin ajuste · intensa +15 %)"] : null,
       !nna ? ["kcal/kg del factorial", f1(R.KcalKg_Fact) + ` <span class="chip">${R.Malnutricion ? esc(R.Malnutricion.toLowerCase()) : "—"}</span>`] : null,
       !nna && R.Factor_Pat !== 1 ? ["Factor patológico (FAO/OMS)", f2(R.Factor_Pat)] : null,
     ]);
@@ -78,7 +78,7 @@
       if (isNum(a) && R.Nom_Kcal !== quiere) h += `<p class="aviso-g">Con ${E.AjustePct > 0 ? "+" : ""}${f0(E.AjustePct)} % la adecuación queda en ${f0(a)} % de la referencia (${f1(ref)} kcal/kg): todavía es <b>${esc(R.Nom_Kcal.toLowerCase())}</b>. Para que sea ${quiere.toLowerCase()} debe quedar ${E.AjustePct > 0 ? "sobre 110 %" : "bajo 90 %"} (Consenso p. 21).</p>`;
     }
     const v = [];
-    if (nna && R.Edad_Anios !== "" && R.Edad_Anios >= 1) v.push(V(ctx, "pal"));
+    if (nna && R.EdadEv_A !== "" && R.EdadEv_A >= 1) v.push(V(ctx, "pal"));
     if (!nna) v.push(V(ctx, "V20"));
     if (!nna && ctx.D.req_factor_pat && /⚠/.test(ctx.D.req_factor_pat)) v.push(V(ctx, "V21"));
     if (E.PC && E.PC.activa) v.push(V(ctx, "krick"));

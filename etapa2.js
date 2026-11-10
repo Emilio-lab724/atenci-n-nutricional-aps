@@ -154,7 +154,7 @@
   function motivoCC(R, D) {
     const I = R.ind.CC;
     if (I.p) return pill(I.cls);
-    if (isNum(R.Edad_Anios) && R.Edad_Anios < 5) return `<span class="ayuda">No aplica (desde los 5 años)</span>`;
+    if (isNum(R.EdadEv_A) && R.EdadEv_A < 5) return `<span class="ayuda">No aplica (desde los 5 años)</span>`;
     const f = []; if (!R.SexoC) f.push("sexo"); if (!isNum(R.Edad_Anios)) f.push("fechas"); if (!isNum(D.cc)) f.push("circunferencia de cintura");
     return f.length ? `<span class="estado riesgo">Falta ${esc(lista(f))}</span>` : pill(I.cls);
   }
@@ -166,7 +166,7 @@
       isNum(i.valor) && i.aplica === "Sí" ? fmt(i.valor, 1) : "—", isNum(i.Z) ? zPill(i.Z) : "—", motivo(R, D, k, i)]);
     rows.push(["PC/E (cintura, 5-19 a)", isNum(I.CC.valor) && I.CC.aplica === "Sí" ? fmt(I.CC.valor, 1) : "—", esc(txt(I.CC.Z)) + (I.CC.p ? ` <span class="ayuda">(p75 ${fmt(I.CC.p[3], 1)} · p90 ${fmt(I.CC.p[4], 1)})</span>` : ""), motivoCC(R, D)]);
     const fICT = []; if (!isNum(D.cc)) fICT.push("circunferencia de cintura"); if (!isNum(R.Talla_cm)) fICT.push("talla");
-    rows.push(["Índice cintura/talla (≥ 0,5)", isNum(R.ICT) ? fmt(R.ICT, 2) : "—", "", isNum(R.ICT) ? pill(R.ICT_Cls) : isNum(R.Edad_Anios) && R.Edad_Anios < 5 ? `<span class="ayuda">No aplica (desde los 5 años)</span>` : `<span class="estado riesgo">Falta ${esc(lista(fICT))}</span>`]);
+    rows.push(["Índice cintura/talla (≥ 0,5)", isNum(R.ICT) ? fmt(R.ICT, 2) : "—", "", isNum(R.ICT) ? pill(R.ICT_Cls) : isNum(R.EdadEv_A) && R.EdadEv_A < 5 ? `<span class="ayuda">No aplica (desde los 5 años)</span>` : `<span class="estado riesgo">Falta ${esc(lista(fICT))}</span>`]);
     const disp = filas.filter(([, k, i]) => isNum(i.Z)).map(([n, k]) => k);
     let sel = ui.chart && disp.includes(ui.chart) ? ui.chart : ({ "P/E": "PE", "P/T": "PT", "IMC/E": "IMC" }[R.IndicadorNNA] || disp[0]);
     const tabs = disp.length ? `<div class="tabs" role="tablist">${disp.map((k) => `<button type="button" role="tab" aria-selected="${k === sel}" data-a="chart" data-ind="${k}">${esc(IND[k].t)}</button>`).join("")}</div>` : "";
@@ -226,7 +226,7 @@
     if (R.Edad_Anios === "") falta.push("las fechas de nacimiento y evaluación (Datos del paciente)");
     if (!isNum(D.cb)) falta.push("la circunferencia braquial");
     if (!isNum(D.cc_pt)) falta.push("el pliegue tricipital");
-    const aviso = isNum(R.Edad_Anios) && R.Edad_Anios < 1 ? `<p class="sec-nota" style="color:var(--warn)">Frisancho no aplica en menores de 1 año: las tablas parten al año de edad (Frisancho 1981, tramos 1 a 74,9 años).</p>`
+    const aviso = isNum(R.EdadEv_A) && R.EdadEv_A < 1 ? `<p class="sec-nota" style="color:var(--warn)">Frisancho no aplica en menores de 1 año: las tablas parten al año de edad (Frisancho 1981, tramos 1 a 74,9 años).</p>`
       : falta.length ? `<p class="sec-nota" style="color:var(--warn)">Para calcular Frisancho falta ${falta.join(", ").replace(/, ([^,]*)$/, " y $1")}.</p>` : (K.Nota ? nota(esc(K.Nota)) : "");
     return aviso + tabla(["Indicador", "Valor", "p10", "p50", "p90", "Clasificación"], [
       row("CMB (mm) = CB − π·PT", K.CMB, K.pCMB, K.CMB_Cls), row("AMB (mm²) = CMB²/4π", K.AMB, K.pAMB, K.AMB_Cls), row("AGB (mm²) = CB²/4π − AMB", K.AGB, K.pAGB, K.AGB_Cls)]) +

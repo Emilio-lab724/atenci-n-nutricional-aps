@@ -24,14 +24,14 @@
       ["Colesterol no-HDL ⚠", isNum(R.Lab_NoHDL) ? f(R.Lab_NoHDL, 0) + " mg/dL · " + pill(R.Lab_NoHDL_Cls) : "—"],
       ["VLDL (TG/5)", isNum(R.Lab_VLDL) ? f(R.Lab_VLDL, 0) + " mg/dL · " + pill(R.Lab_VLDL_Cls) : "—"],
       ["HOMA-IR (corte 2,5)", isNum(R.Lab_HOMA) ? f(R.Lab_HOMA, 2) + " · " + pill(R.Lab_HOMA_Cls) : "—"],
-      ["VFG estimada" + (R.Edad_Anios !== "" && R.Edad_Anios < 18 ? " (Schwartz)" : " (CKD-EPI 2021 ⚠)"), isNum(R.Lab_VFG) ? f(R.Lab_VFG, 1) + " mL/min/1,73 m² · " + esc(R.Lab_EtapaG) + " · " + pill(R.Lab_EtapaG_Cls) : "—"],
+      ["VFG estimada" + (R.EdadEv_A !== "" && R.EdadEv_A < 18 ? " (Schwartz)" : " (CKD-EPI 2021 ⚠)"), isNum(R.Lab_VFG) ? f(R.Lab_VFG, 1) + " mL/min/1,73 m² · " + esc(R.Lab_EtapaG) + " · " + pill(R.Lab_EtapaG_Cls) : "—"],
       ["Meta de HbA1c en DM", f(R.Meta_HbA1c, 0) + " %"],
       !nna && R.Lab_DPV ? ["Desnutrición proteica visceral (albúmina)", pill("desnutrición proteica visceral " + R.Lab_DPV)] : null,
       ["Alteraciones que pasan al DNI (ODIN)", R.Lab_ODIN ? `<b>${esc(R.Lab_ODIN)}</b>` : "Ninguna"],
     ]);
     if (R.Embarazada) h += nota(esc(V(ctx, "lab", "gestante")));
     const v = [];
-    if (isNum(R.Lab_VFG) && R.Edad_Anios >= 18) v.push(V(ctx, "lab", "ckd"));
+    if (isNum(R.Lab_VFG) && R.EdadEv_A >= 18) v.push(V(ctx, "lab", "ckd"));
     if (isNum(R.Lab_NoHDL)) v.push(V(ctx, "lab", "nohdl"));
     if (R.LABV && isNum(R.LABV.insul)) v.push(V(ctx, "lab", "insul"));
     return h + nota("Sin diagnóstico previo, las alteraciones se escriben como «sugerente de…» (Consenso p. 21). «Alto en hierro / vitamina D» de la PD sale de aquí.") + verif(v.filter(Boolean));
@@ -42,12 +42,12 @@
     const { R } = ctx; C = ctx.ESQ.colores;
     if (R.PAS === "" || R.PAD === "") return nota("Ingrese la PA sistólica y diastólica (promedio de las mediciones).");
     let h = "";
-    if (R.Ciclo === "NNA" && R.Edad_Anios !== "" && R.Edad_Anios >= 1 && R.Edad_Anios < 13) {
+    if (R.Ciclo === "NNA" && R.EdadEv_A !== "" && R.EdadEv_A >= 1 && R.EdadEv_A < 13) {
       const fl = R.PA.filas;
       if (fl[0].fila === "" || fl[0].col === "") h += nota("Falta la talla para elegir el percentil de talla de la tabla de PA.");
       else h += tabla(["", "Talla ref. (cm)", "p90", "p95", "p95 + 12", "Elevada desde", "HTA 1 desde", "HTA 2 desde", "Nivel"], fl.map((x) => `<tr><td>${x.comp}</td><td class="num">${f(x.talla, 1)}</td><td class="num">${f(x.p90, 0)}</td><td class="num">${f(x.p95, 0)}</td><td class="num">${f(x.p95x, 0)}</td><td class="num">${f(x.h, 0)}</td><td class="num">${f(x.i, 0)}</td><td class="num">${f(x.j, 0)}</td><td class="num">${x.nivel === "" ? "—" : x.nivel}</td></tr>`))
         + nota("Percentil de talla con la talla más cercana a la del niño; se usa el menor entre el percentil y el valor absoluto (120/80, 130/80, 140/90).");
-    } else if (R.Ciclo === "NNA" && R.Edad_Anios >= 13) h += nota("≥ 13 años: valores absolutos (elevada ≥ 120/< 80, HTA 1 ≥ 130/80, HTA 2 ≥ 140/90).");
+    } else if (R.Ciclo === "NNA" && R.EdadEv_A >= 13) h += nota("≥ 13 años: valores absolutos (elevada ≥ 120/< 80, HTA 1 ≥ 130/80, HTA 2 ≥ 140/90).");
     h += dl([
       ["Clasificación", `<b>${pill(R.PA_Clasificacion)}</b>`],
       R.Ciclo !== "NNA" ? ["Meta de PA", esc(R.PA_Meta)] : null,

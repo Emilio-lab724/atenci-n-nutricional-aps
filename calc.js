@@ -180,7 +180,7 @@
 
   function antropometria(D, R, T, opts) {
     const t2 = T && T.t2, A = t2 && t2.antro;
-    const C = R.Ciclo, sx = R.SexoC, aprox = R.Edad_Meses_Aprox, edad = R.Edad_Anios;
+    const C = R.Ciclo, sx = R.SexoC, aprox = R.Edad_Meses_Aprox, edad = R.EdadEv_A;
     const peso = isNum(D.peso) ? D.peso : "", tallaIn = isNum(D.talla) ? D.talla : "";
     R.Peso = peso; R.PCef = isNum(D.pcef) ? D.pcef : ""; const CC = isNum(D.cc) ? D.cc : "", CB = isNum(D.cb) ? D.cb : "";
     // edema / ascitis
@@ -333,7 +333,7 @@
   }
 
   function composicion(D, R, T) {
-    const C = R.Ciclo, sx = R.SexoC, edad = R.Edad_Anios, F = T && T.fri;
+    const C = R.Ciclo, sx = R.SexoC, edad = R.EdadEv_A, F = T && T.fri;
     const CB = isNum(D.cb) ? D.cb : "", PT = isNum(D.cc_pt) ? D.cc_pt : "";
     const K = R.CC_ = {};
     K.FRI_Edad = edad === "" || C === "" || edad < 1 ? "" : edad < 19 ? edad : edad < 25 ? 19 : edad < 35 ? 25 : edad < 45 ? 35 : edad < 55 ? 45 : edad < 65 ? 55 : 65;
@@ -402,6 +402,10 @@
     R.PR_UsaEC = R.PR.UsaEC;
     R.Edad_Meses_Aprox = !ok ? "" : R.PR.UsaEC === "Sí" ? R.PR.ECMeses : R.Edad_Meses + (R.Edad_DiaRest >= 16 ? 1 : 0);
     R.Edad_Dec = ok ? (feval.t - fnac.t) / DIA / 365.25 : "";
+    // Edad para la evaluación nutricional (Patrones de crecimiento, p. 10): ≥ 16 días → mes siguiente; 0-15 días → mes cumplido.
+    // Se usa en curvas, tablas por edad, grupos etarios y plantilla de PD. La edad cronológica exacta se sigue mostrando.
+    R.EdadEv_M = !ok ? "" : PLANILLA ? R.Edad_Meses : R.Edad_Meses + (R.Edad_DiaRest >= 16 ? 1 : 0);
+    R.EdadEv_A = !ok ? "" : PLANILLA ? R.Edad_Anios : Math.floor(R.EdadEv_M / 12);
     if (ok) {
       const a = R.Edad_Anios, m = R.Edad_MesRest, d = R.Edad_DiaRest;
       R.Edad_Texto = (a > 0 ? a + (a === 1 ? " año" : " años") + ", " : "") +
@@ -412,8 +416,8 @@
     R.Ciclo = R.Ciclo_Manual === "" || R.Ciclo_Manual === "Automático" ? R.Ciclo_Auto : R.Ciclo_Manual;
     const C = R.Ciclo;
     R.GrupoEtario = C === "" ? "" : C === "AD" ? "Adulto" : C === "AM" ? "Adulto mayor" :
-      R.Edad_Meses < 12 ? "Lactante menor" : R.Edad_Meses < 24 ? "Lactante mayor" :
-      R.Edad_Anios < 6 ? "Preescolar" : R.Edad_Anios < 10 ? "Escolar" : "Adolescente";
+      R.EdadEv_M < 12 ? "Lactante menor" : R.EdadEv_M < 24 ? "Lactante mayor" :
+      R.EdadEv_A < 6 ? "Preescolar" : R.EdadEv_A < 10 ? "Escolar" : "Adolescente";
     R.Actividad = vacio(D.actividad) ? "Ligera" : D.actividad;
     actividadPC(D, R, T);
     R.Alim_Lact = vacio(D.alim_lact) ? "Lactancia materna" : D.alim_lact;
@@ -590,7 +594,7 @@
 
   function requerimientos(D, R, T) {
     const t3 = (T && T.t3) || null;
-    const C = R.Ciclo, sx = R.SexoC, M = sx === "M", aprox = R.Edad_Meses_Aprox, edad = R.Edad_Anios, Peso = R.Peso, Act = R.Actividad, AL = R.Alim_Lact;
+    const C = R.Ciclo, sx = R.SexoC, M = sx === "M", aprox = R.Edad_Meses_Aprox, edad = R.EdadEv_A, Peso = R.Peso, Act = R.Actividad, AL = R.Alim_Lact;
     const nna = C === "NNA", adam = C === "AD" || C === "AM";
     const E = R.EN = {};
     // --- peso y factores ---
@@ -691,7 +695,7 @@
     R.GET_Final = isNum(R.GET_Calc) ? conAj(R.GET_Calc) : "";
     // Gestante y nodriza: GEB FAO/OMS/UNU 2004 × PAL (< 18 años: tramo 18-30) + kcal extra por embarazo / + 1.000 kcal múltiple desde la semana 20 / + 500 kcal nodriza
     if (gn && hayP) {
-      const e = R.Edad_Anios, Pg = num0(P);
+      const e = R.EdadEv_A, Pg = num0(P);
       GS.gebEc = LT(e, 30) || e === "" ? "14,818 × kg + 486,6 (18-30 años" + (LT(e, 18) ? "; se usa en < 18 años" : "") + ")" : LT(e, 60) ? "8,126 × kg + 845,6 (30-60 años)" : "9,082 × kg + 658,5 (> 60 años)";
       GS.geb = LT(e, 30) || e === "" ? 14.818 * Pg + 486.6 : LT(e, 60) ? 8.126 * Pg + 845.6 : 9.082 * Pg + 658.5;
       GS.gebPal = xr(GS.geb * R.Factor_AF, 0);
@@ -796,7 +800,7 @@
     Mc.Validacion = Math.abs(R.Suma_Pct - 100) < 0.5 ? "OK: suma 100 %" : "Revisar: suma = " + String(xr(R.Suma_Pct, 1)).replace(".", ",") + " %";
 
     // --- NUTRIENTES CRÍTICOS ---
-    R.Grupo_RDI = edad === "" ? "" : R.Edad_Meses < 7 ? "0-6m" : R.Edad_Meses < 12 ? "7-12m" : edad < 4 ? "1-3" : edad < 9 ? "4-8" : edad < 14 ? "9-13" : edad < 19 ? "14-18" : edad < 31 ? "19-30" : edad < 51 ? "31-50" : edad < 71 ? "51-70" : ">70";
+    R.Grupo_RDI = edad === "" ? "" : R.EdadEv_M < 7 ? "0-6m" : R.EdadEv_M < 12 ? "7-12m" : edad < 4 ? "1-3" : edad < 9 ? "4-8" : edad < 14 ? "9-13" : edad < 19 ? "14-18" : edad < 31 ? "19-30" : edad < 51 ? "31-50" : edad < 71 ? "51-70" : ">70";
     R.Sexo_RDI = edad === "" ? "" : edad < 9 ? "N" : sx;
     const odin = S(R.Lab_ODIN).toLowerCase(), pacls = S(R.PA_Clasificacion).toLowerCase();
     const NC = R.NC = [];
@@ -833,7 +837,7 @@
     // --- HIDRATACIÓN ---
     const H = R.HID = [], hP = Peso !== "";
     const push = (n, ap, f, fuente) => { let v = "No aplica"; if (ap) { try { v = f(); if (!isNum(v)) v = "—"; } catch (x) { v = "—"; } } H.push({ n, aplica: ap ? "Sí" : "No", ml: v, vasos: isNum(v) ? xr(v / 200, 1) : "", fuente }); };
-    push(LISTA_HID[0], hP && nna, () => { const mh = t3.mah; let i = -1; for (let j = 0; j < mh.m.length; j++) if (mh.m[j] <= R.Edad_Meses) i = j; if (i < 0) return NaN; return xr((mh.min[i] + mh.max[i]) / 2 * Pn, 0); }, "Clase 4 p. 35/53; Clase 5 p. 20 (punto medio; peso usado en requerimientos, Consenso p. 6)");
+    push(LISTA_HID[0], hP && nna, () => { const mh = t3.mah; let i = -1; for (let j = 0; j < mh.m.length; j++) if (mh.m[j] <= R.EdadEv_M) i = j; if (i < 0) return NaN; return xr((mh.min[i] + mh.max[i]) / 2 * Pn, 0); }, "Clase 4 p. 35/53; Clase 5 p. 20 (punto medio; peso usado en requerimientos, Consenso p. 6)");
     push(LISTA_HID[1], hP && nna, () => xr(Pn < 10 ? 100 * Pn : Pn <= 20 ? 1000 + 50 * (Pn - 10) : 1500 + 20 * (Pn - 20), 0), "Consenso p. 39 (peso usado)");
     push(LISTA_HID[2], hP && nna && LT(edad, 19), () => xr(t3.agua[R.Grupo_RDI][M ? 0 : 1] * 1000, 0), "Consenso p. 38");
     push(LISTA_HID[3], hP && nna && GE(edad, 1) && isNum(edad), () => xr(55 * Pn, 0), "Consenso p. 39 (punto medio 55 ml/kg; peso usado)");
@@ -969,7 +973,7 @@
 
   function laboratorio(D, R, T) {
     const gest = !!R.Embarazada, t7 = (T && T.t7) || null;
-    const C = R.Ciclo, nna = C === "NNA" && !gest, sx = R.SexoC, F = sx === "F", M = sx === "M", em = R.Edad_Meses, ea = R.Edad_Anios;
+    const C = R.Ciclo, nna = C === "NNA" && !gest, sx = R.SexoC, F = sx === "F", M = sx === "M", em = R.EdadEv_M, ea = R.EdadEv_A;
     const fn = parseFecha(D.fnac), fe = parseFecha(D.feval), dias = fn && fe ? Math.round((fe.t - fn.t) / 86400000) : NaN;
     const LTe = (n) => LT(em, n), LTa = (n) => LT(ea, n);
     const v = {}; for (const [k] of LAB) v[k] = numD(D["lab_" + k]);
@@ -1059,7 +1063,7 @@
   }
 
   function presionArterial(D, R, T) {
-    const t5 = T && T.t5, C = R.Ciclo, ea = R.Edad_Anios, sx = R.SexoC, Tc = R.Talla_cm;
+    const t5 = T && T.t5, C = R.Ciclo, ea = R.EdadEv_A, sx = R.SexoC, Tc = R.Talla_cm;
     const PAS = numD(D.pa_pas), PAD = numD(D.pa_pad);
     R.PAS = PAS; R.PAD = PAD;
     const P = R.PA = { filas: [] };
@@ -1101,7 +1105,7 @@
   }
 
   function riesgoCV(D, R, T) {
-    const t5 = T && T.t5, C = R.Ciclo, ea = R.Edad_Anios, sx = R.SexoC, si = (k) => S(D[k]) === "Sí";
+    const t5 = T && T.t5, C = R.Ciclo, ea = R.EdadEv_A, sx = R.SexoC, si = (k) => S(D[k]) === "Sí";
     const RC = R.RCV = {};
     RC.ecv = si("ant_ecv") ? "Sí" : "No"; RC.dm = si("ant_dm2") ? "Sí" : "No";
     const et = S(D.ant_erc_etapa);
@@ -1284,7 +1288,7 @@
   const DIST0 = [20, 5, 25, 20, 25, 5];
 
   function prescripcion(D, R, T) {
-    const t4 = T && T.t4, C = R.Ciclo, nna = C === "NNA", ea = R.Edad_Anios, P = R.PD = {};
+    const t4 = T && T.t4, C = R.Ciclo, nna = C === "NNA", ea = R.EdadEv_A, P = R.PD = {};
     R.PD_Consist = vacio(D.pd_consist) ? "Normal" : D.pd_consist; R.PD_Digest = vacio(D.pd_digest) ? "Común" : D.pd_digest; R.PD_Vol = vacio(D.pd_vol) ? "Normales" : D.pd_vol;
     P.dist = DIST0.map((d, i) => (isNum(numD(D["pd_dist_" + i])) ? numD(D["pd_dist_" + i]) : d));
     R.PD_NCol = (P.dist[1] > 0 ? 1 : 0) + (P.dist[5] > 0 ? 1 : 0);
@@ -1308,7 +1312,9 @@
           + (supl !== "" ? ", suplementación: " + supl : "") + ".";
       } catch (e) { return "Faltan datos para la prescripción"; }
     };
-    R.PD_Texto = textoPD(false); R.PD_Texto_Planilla = textoPD(true);
+    R.PD_Auto = textoPD(false); R.PD_Texto_Planilla = textoPD(true);
+    R.PD_Manual = S(D.pd_manual); // PD escrita a mano (como el DNI): reemplaza a la automática
+    R.PD_Texto = R.PD_Manual !== "" ? R.PD_Manual : R.PD_Auto;
     // pauta en porciones de intercambio
     const GET = R.GET_Final, gl = isNum(GET);
     P.kcalObj = P.dist.map((c) => (gl ? xround(GET * c / 100, 0) : "—"));
@@ -1368,7 +1374,7 @@
   const num0z = (v) => (isNum(v) ? v : 0);
 
   function seguimiento(D, R) {
-    const C = R.Ciclo, nna = C === "NNA", ea = R.Edad_Anios, em = R.Edad_Meses, si = (k) => S(D[k]) === "Sí", G = R.SEG = {};
+    const C = R.Ciclo, nna = C === "NNA", ea = R.EdadEv_A, em = R.EdadEv_M, si = (k) => S(D[k]) === "Sí", G = R.SEG = {};
     const pa = S(R.PA_Clasificacion), ct = numD(D.lab_ct);
     G.motivos = nna || LT(ea, 15) ? "" : (si("ant_ecv") ? "ECV aterosclerótica, " : "") + (si("ant_hta") ? "HTA, " : pa.includes("HTA (PA") ? "HTA (PA ≥ 180/110), " : "")
       + (si("ant_dm2") ? "DM2, " : lower(R.Lab_ODIN).includes("diabetes") ? "sospecha de DM2 (confirmar), " : "")
